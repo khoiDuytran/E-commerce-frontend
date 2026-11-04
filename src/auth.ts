@@ -35,14 +35,21 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         if (response.ok) {
           const res: IBackendRes<ILogin> = await response.json();
+          const accessToken = res.data?.access_token;
+          const refreshToken = readRefreshCookie(response);
+          // Thiếu refresh token thì phiên chết sau khi access token hết hạn mà không
+          // rõ lý do, nên báo lỗi ngay lúc đăng nhập
+          if (!accessToken || !refreshToken) {
+            throw new Error("Backend không trả đủ token khi đăng nhập");
+          }
           return {
             _id: res.data?.user?._id,
             id: res.data?.user?._id,
             name: res.data?.user?.name,
             email: res.data?.user?.email,
             role: res.data?.user?.role,
-            access_token: res.data?.access_token,
-            refresh_token: readRefreshCookie(response),
+            access_token: accessToken,
+            refresh_token: refreshToken,
           };
         } else if (response.status === 401) {
           throw new InvalidEmailPasswordError();
@@ -64,26 +71,34 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async signOut(message) {
       const refreshToken =
         "token" in message ? message.token?.refresh_token : undefined;
-      if (refreshToken) await revokeBackendRefreshToken(refreshToken);
+      if (!refreshToken) return;
+      // Thu hồi ở backend chỉ là best-effort: lỗi ở đây không được chặn việc xoá phiên
+      try {
+        await revokeBackendRefreshToken(refreshToken);
+      } catch (error) {
+        console.error("Không thu hồi được refresh token khi đăng xuất", error);
+      }
     },
   },
   callbacks: {
     jwt({ token, user }) {
       if (user) {
-        // User is available during sign-in
-        const { refresh_token, ...profile } = user as IUser & {
+        // Chỉ có user khi vừa đăng nhập. Token lưu riêng, không nằm trong user.
+        const { access_token, refresh_token, ...profile } = user as IUser & {
+          access_token: string;
           refresh_token: string;
         };
         token.user = profile;
-        token.access_token = profile.access_token;
+        token.access_token = access_token;
         token.refresh_token = refresh_token;
       }
       return token;
     },
     session({ session, token }) {
-      (session.user as IUser) = token.user;
-      session.access_token =
-        (token.access_token as string) ?? (token.user as IUser)?.access_token;
+      // Chọn từng field: phiên tạo trước đây còn access_token trong token.user
+      const { _id, id, name, email, role } = token.user;
+      (session.user as IUser) = { _id, id, name, email, role };
+      session.access_token = token.access_token;
       return session;
     },
   },

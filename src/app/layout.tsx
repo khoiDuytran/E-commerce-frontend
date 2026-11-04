@@ -3,7 +3,6 @@ import { Inter } from "next/font/google";
 import { AntdRegistry } from "@ant-design/nextjs-registry";
 
 import "@/app/globals.css";
-import NextAuthWrapper from "@/library/next.auth.wrapper";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -20,9 +19,9 @@ export default function RootLayout({
   return (
     <html lang="vi">
       <body className={inter.className}>
-        <AntdRegistry>
-          <NextAuthWrapper>{children}</NextAuthWrapper>
-        </AntdRegistry>
+        {/* Không dùng SessionProvider: không component nào cần useSession(), còn lần
+            fetch /api/auth/session của nó có thể ghi đè phiên vừa được proxy làm mới */}
+        <AntdRegistry>{children}</AntdRegistry>
       </body>
     </html>
   );

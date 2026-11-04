@@ -1,13 +1,11 @@
 "use server";
 
-import { auth } from "@/auth";
+import { getAuthHeader } from "@/utils/session";
 import DashboardStats, { IDashboardStats } from "@/components/admin/dashboard.stats";
 import { sendRequest } from "@/utils/api";
 
 const DashboardPage = async () => {
-  const session = await auth();
-  const token = session?.access_token || session?.user?.access_token;
-  const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+  const headers = await getAuthHeader();
 
   let response: IBackendRes<IDashboardStats> | undefined;
   let requestError: string | undefined;

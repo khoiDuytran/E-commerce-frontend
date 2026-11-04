@@ -4,8 +4,8 @@ import {
   canRetryPayment,
   getMyOrderByCode,
   getOrderPayment,
-  getSessionToken,
 } from "@/utils/account.api";
+import { getSessionToken } from "@/utils/session";
 import { sendRequest } from "@/utils/api";
 import {
   formatDateTime,

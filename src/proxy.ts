@@ -45,7 +45,7 @@ export async function proxy(req: NextRequest) {
         ...token,
         access_token: result.accessToken,
         refresh_token: result.refreshToken,
-        user: { ...token.user, access_token: result.accessToken },
+        user: { ...token.user, role: result.role ?? token.user.role },
       };
       sessionCookie = await encode({
         token,
@@ -90,7 +90,9 @@ export async function proxy(req: NextRequest) {
 }
 
 export const config = {
+  // Loại theo cả đoạn đường dẫn (có "/") để /authors, /apix... vẫn qua proxy.
+  // Bỏ qua file tĩnh trong public/ để không giải mã JWT cho mỗi ảnh, icon, sw.js.
   matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico|auth|verify|$).*)",
+    "/((?!api/|_next/static|_next/image|favicon\\.ico|auth/|verify/|.*\\.(?:svg|png|jpe?g|gif|webp|avif|ico|js|css|map|txt|xml|json|webmanifest|woff2?)$|$).*)",
   ],
 };

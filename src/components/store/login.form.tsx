@@ -61,7 +61,8 @@ const LoginForm = () => {
         return;
       }
 
-      // Tải lại toàn trang để header nhận phiên đăng nhập mới
+      // Tải lại toàn trang để header nhận phiên đăng nhập mới. getSession() chạy sau
+      // khi signIn đã ghi cookie nên không chạy song song với lần làm mới token nào
       const session = await getSession();
       window.location.assign(
         getRedirectTarget(

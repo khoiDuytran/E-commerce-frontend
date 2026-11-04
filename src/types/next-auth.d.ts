@@ -7,7 +7,6 @@ export interface IUser {
   name: string;
   email: string;
   role: string;
-  access_token: string;
   emailVerified?: Date | null;
 }
 

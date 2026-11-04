@@ -25,19 +25,27 @@ const refreshCookieHeader = (refreshToken: string) => ({
   cookie: `${REFRESH_COOKIE}=${encodeURIComponent(refreshToken)}`,
 });
 
-export const isAccessTokenExpiring = (accessToken?: string) => {
+// Không kiểm tra chữ ký: token lấy từ JWT mã hoá của NextAuth hoặc vừa nhận từ backend
+const readAccessTokenPayload = (
+  accessToken?: string,
+): { exp?: number; role?: string } | null => {
   try {
-    const payload = JSON.parse(
+    return JSON.parse(
       Buffer.from(accessToken!.split(".")[1], "base64url").toString(),
     );
-    return payload.exp * 1000 - Date.now() < REFRESH_BUFFER_MS;
   } catch {
-    return true;
+    return null;
   }
 };
 
+export const isAccessTokenExpiring = (accessToken?: string) => {
+  const exp = readAccessTokenPayload(accessToken)?.exp;
+  return typeof exp !== "number" || exp * 1000 - Date.now() < REFRESH_BUFFER_MS;
+};
+
 export type RefreshResult =
-  | { status: "ok"; accessToken: string; refreshToken: string }
+  // role lấy từ access token mới để phiên theo kịp khi admin đổi quyền tài khoản
+  | { status: "ok"; accessToken: string; refreshToken: string; role?: string }
   // Backend từ chối refresh token: phiên đã hết
   | { status: "invalid" }
   // Lỗi tạm thời (mất kết nối, backend lỗi): giữ nguyên phiên
@@ -56,7 +64,12 @@ const callRefresh = async (refreshToken: string): Promise<RefreshResult> => {
     const accessToken = json?.data?.access_token;
     const newRefreshToken = readRefreshCookie(res);
     if (!accessToken || !newRefreshToken) return { status: "unavailable" };
-    return { status: "ok", accessToken, refreshToken: newRefreshToken };
+    return {
+      status: "ok",
+      accessToken,
+      refreshToken: newRefreshToken,
+      role: readAccessTokenPayload(accessToken)?.role,
+    };
   } catch {
     return { status: "unavailable" };
   }
@@ -68,15 +81,31 @@ export const refreshBackendTokens = (refreshToken: string) => {
   const existing = inFlight.get(refreshToken);
   if (existing) return existing;
 
-  const request = callRefresh(refreshToken);
+  // Chỉ giữ kết quả thành công: lỗi tạm thời phải được thử lại ở request sau
+  const request = callRefresh(refreshToken).then((result) => {
+    if (result.status !== "ok" && inFlight.get(refreshToken) === request) {
+      inFlight.delete(refreshToken);
+    }
+    return result;
+  });
   inFlight.set(refreshToken, request);
-  setTimeout(() => inFlight.delete(refreshToken), REFRESH_RESULT_TTL_MS);
+  setTimeout(() => {
+    if (inFlight.get(refreshToken) === request) inFlight.delete(refreshToken);
+  }, REFRESH_RESULT_TTL_MS);
   return request;
 };
 
+// Giới hạn thời gian chờ để backend treo không làm đăng xuất treo theo
+const REVOKE_TIMEOUT_MS = 5 * 1000;
+
 export const revokeBackendRefreshToken = async (refreshToken: string) => {
-  await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/logout`, {
-    method: "POST",
-    headers: refreshCookieHeader(refreshToken),
-  });
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/logout`,
+    {
+      method: "POST",
+      headers: refreshCookieHeader(refreshToken),
+      signal: AbortSignal.timeout(REVOKE_TIMEOUT_MS),
+    },
+  );
+  if (!res.ok) throw new Error(`Backend trả về ${res.status}`);
 };

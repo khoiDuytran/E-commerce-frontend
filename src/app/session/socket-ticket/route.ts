@@ -1,4 +1,4 @@
-import { auth } from "@/auth";
+import { getSessionToken } from "@/utils/session";
 import { sendRequest } from "@/utils/api";
 import { NextResponse } from "next/server";
 
@@ -11,8 +11,7 @@ export const dynamic = "force-dynamic";
 const noStore = { "Cache-Control": "no-store" };
 
 export async function POST() {
-  const session = await auth();
-  const token = session?.access_token || session?.user?.access_token;
+  const token = await getSessionToken();
   if (!token) {
     return NextResponse.json({ ticket: null }, { status: 401, headers: noStore });
   }

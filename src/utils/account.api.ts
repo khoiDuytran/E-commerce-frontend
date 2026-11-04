@@ -1,13 +1,8 @@
-import { auth } from "@/auth";
+import { getSessionToken } from "./session";
 import { redirect } from "next/navigation";
 import { sendRequest } from "./api";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
-
-export const getSessionToken = async () => {
-  const session = await auth();
-  return session?.access_token || session?.user?.access_token;
-};
 
 export const requireToken = async (callbackPath: string) => {
   const token = await getSessionToken();

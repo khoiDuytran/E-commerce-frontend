@@ -1,17 +1,12 @@
 "use server";
 import { auth, signIn } from "@/auth";
 import { sendRequest, sendRequestFile } from "./api";
+import { getAuthHeader } from "./session";
 import { updateTag } from "next/cache";
 import {
   InactiveAccountError,
   InvalidEmailPasswordError,
 } from "./errors";
-
-const getAuthHeader = async (): Promise<Record<string, string>> => {
-  const session = await auth();
-  const token = session?.access_token || session?.user?.access_token;
-  return token ? { Authorization: `Bearer ${token}` } : {};
-};
 
 export async function authenticate(username: string, password: string) {
   try {

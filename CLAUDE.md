@@ -9,8 +9,8 @@ Thêm trang quản trị: dùng skill `add-admin-page`. Thêm trang cửa hàng:
 - Chỉ làm mới token trong [src/proxy.ts](src/proxy.ts). Server component không ghi được cookie, nên không refresh trong callback `jwt` của NextAuth hay trong page.
 - Refresh token chỉ nằm trong JWT mã hóa của NextAuth. Không đưa nó vào session.
 - Không truyền `session` hoặc access token xuống client component, vì props nằm trong HTML gửi cho trình duyệt. Chỉ truyền field cần hiển thị.
-- `/api/auth/session` cố ý bỏ access token (xem [route.ts](src/app/api/auth/[...nextauth]/route.ts)). Vì vậy `useSession()` ở client không có token; `auth()` phía server thì có.
-- Gọi API cần token từ phía server: server component hoặc server action trong [actions.ts](src/utils/actions.ts).
+- `/api/auth/session` cố ý bỏ access token (xem [route.ts](src/app/api/auth/[...nextauth]/route.ts)). `auth()` phía server thì có token. Không dùng `SessionProvider`/`useSession()`: lần fetch session của nó đi ngoài proxy và có thể ghi đè phiên vừa làm mới. Client cần thông tin người dùng thì nhận qua props đã lọc.
+- Gọi API cần token từ phía server: server component hoặc server action trong [actions.ts](src/utils/actions.ts). Lấy token qua `getSessionToken`/`getAuthHeader` trong [session.ts](src/utils/session.ts); token chỉ nằm ở `session.access_token`, không có trong `session.user`.
 - So sánh lỗi auth theo `type`, không theo tên class: tên class có thể đổi khi minify ở bản production.
 - Matcher của proxy bỏ qua trang chủ `/`, nên server action gọi từ trang chủ không được làm mới token. Việc nào cần token còn hạn ở mọi trang (như vé WebSocket thông báo) thì gọi route handler nằm ngoài `/api`, ví dụ [/session/socket-ticket](src/app/session/socket-ticket/route.ts).
 

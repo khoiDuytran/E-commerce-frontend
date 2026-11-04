@@ -1,4 +1,4 @@
-import { auth } from "@/auth";
+import { getAuthHeader } from "@/utils/session";
 import CouponTable from "@/components/admin/coupon.table";
 import { sendRequest } from "@/utils/api";
 
@@ -49,7 +49,7 @@ const ManageCouponsPage = async ({ searchParams }: IProps) => {
       ? Number(params.pageSize)
       : 10;
   const code = params.code?.trim() ?? "";
-  const session = await auth();
+  const authHeader = await getAuthHeader();
 
   let response: IBackendRes<CouponListResponse> | undefined;
   let requestError: string | undefined;
@@ -62,9 +62,7 @@ const ManageCouponsPage = async ({ searchParams }: IProps) => {
         pageSize,
         ...(code ? { code } : {}),
       },
-      headers: {
-        Authorization: `Bearer ${session?.user.access_token}`,
-      },
+      headers: authHeader,
       nextOption: {
         next: { tags: ["list-coupons"] },
       },

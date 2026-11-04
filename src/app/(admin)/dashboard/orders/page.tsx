@@ -1,4 +1,4 @@
-import { auth } from "@/auth";
+import { getAuthHeader } from "@/utils/session";
 import OrderTable from "@/components/admin/order.table";
 import { IOrder } from "@/components/admin/order.detail.drawer";
 import { sendRequest } from "@/utils/api";
@@ -43,9 +43,7 @@ const ManageOrdersPage = async ({ searchParams }: IProps) => {
   const paymentStatus =
     typeof params.paymentStatus === "string" ? params.paymentStatus.trim() : "";
 
-  const session = await auth();
-  const token = session?.access_token || session?.user?.access_token;
-  const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+  const headers = await getAuthHeader();
 
   let response: IBackendRes<OrderListResponse> | undefined;
   let requestError: string | undefined;

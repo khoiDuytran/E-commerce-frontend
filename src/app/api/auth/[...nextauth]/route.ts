@@ -14,7 +14,6 @@ export const GET = async (req: NextRequest) => {
 
   const session = await response.json();
   if (session?.access_token) delete session.access_token;
-  if (session?.user?.access_token) delete session.user.access_token;
 
   return NextResponse.json(session, {
     status: response.status,

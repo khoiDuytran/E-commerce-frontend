@@ -1,4 +1,4 @@
-import { auth } from "@/auth";
+import { getAuthHeader } from "@/utils/session";
 import UserTable from "@/components/admin/user.table";
 import { sendRequest } from "@/utils/api";
 import { toErrorText } from "@/utils/store";
@@ -16,7 +16,7 @@ const ManageUserPage = async (props: IProps) => {
 
   const current = Number(searchParams.current ?? 1);
   const pageSize = Number(searchParams.pageSize ?? 10);
-  const session = await auth();
+  const authHeader = await getAuthHeader();
 
   let res: IBackendRes<{ results: IUserRecord[]; meta: IPageMeta }> | undefined;
   let error: string | undefined;
@@ -30,9 +30,7 @@ const ManageUserPage = async (props: IProps) => {
         current,
         pageSize,
       },
-      headers: {
-        Authorization: `Bearer ${session?.user?.access_token}`,
-      },
+      headers: authHeader,
       nextOption: {
         next: { tags: ["list-users"] },
       },

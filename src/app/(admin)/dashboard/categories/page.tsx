@@ -1,4 +1,4 @@
-import { auth } from "@/auth";
+import { getAuthHeader } from "@/utils/session";
 import CategoryTable from "@/components/admin/category.table";
 import { sendRequest } from "@/utils/api";
 
@@ -45,7 +45,7 @@ const ManageCategoriesPage = async ({ searchParams }: IProps) => {
       ? Number(params.pageSize)
       : 10;
   const name = params.name?.trim() ?? "";
-  const session = await auth();
+  const authHeader = await getAuthHeader();
 
   let response: IBackendRes<CategoryListResponse> | undefined;
   let requestError: string | undefined;
@@ -57,9 +57,7 @@ const ManageCategoriesPage = async ({ searchParams }: IProps) => {
         current: 1,
         pageSize: 100,
       },
-      headers: {
-        Authorization: `Bearer ${session?.user?.access_token}`,
-      },
+      headers: authHeader,
       nextOption: {
         next: { tags: ["list-categories"] },
       },
@@ -70,9 +68,7 @@ const ManageCategoriesPage = async ({ searchParams }: IProps) => {
           url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/category`,
           method: "GET",
           queryParams: { current: page, pageSize: 100 },
-          headers: {
-            Authorization: `Bearer ${session?.access_token}`,
-          },
+          headers: authHeader,
           nextOption: {
             next: { tags: ["list-categories"] },
           },

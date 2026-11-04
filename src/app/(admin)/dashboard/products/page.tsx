@@ -1,4 +1,4 @@
-import { auth } from "@/auth";
+import { getAuthHeader } from "@/utils/session";
 import ProductTable, {
   ICategoryOption,
   IProduct,
@@ -45,9 +45,7 @@ const ManageProductPage = async ({ searchParams }: IProps) => {
   const category =
     typeof params.category === "string" ? params.category.trim() : "";
 
-  const session = await auth();
-  const token = session?.access_token || session?.user?.access_token;
-  const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+  const headers = await getAuthHeader();
 
   let productResponse: IBackendRes<ProductListResponse> | undefined;
   let categoryResponse: IBackendRes<CategoryListResponse> | undefined;
