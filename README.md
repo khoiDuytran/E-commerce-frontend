@@ -90,5 +90,3 @@ src/
 - Đăng nhập bằng Credentials của NextAuth, gọi API đăng nhập của backend. Access token và refresh token của backend nằm trong JWT đã mã hóa của NextAuth, lưu trong cookie `httpOnly`.
 - `src/proxy.ts` chạy trước mỗi request: làm mới access token sắp hết hạn và chuyển hướng về `/auth/login` nếu người không phải admin vào `/dashboard`.
 - Access token không được gửi xuống trình duyệt. Mọi lời gọi API cần đăng nhập đều đi từ server component, server action (`src/utils/actions.ts`) hoặc route handler.
-
-Chi tiết quy ước khi phát triển xem [CLAUDE.md](CLAUDE.md).
