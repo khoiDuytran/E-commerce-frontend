@@ -13,7 +13,9 @@ const LINKS = [
   { href: "/account/wishlist", label: "Yêu thích" },
 ];
 
-const AccountNav = () => {
+const DISABLE_HREF = "/account/disable";
+
+const AccountNav = ({ isAdmin }: { isAdmin: boolean }) => {
   const pathname = usePathname();
   const [isSigningOut, setIsSigningOut] = useState(false);
 
@@ -51,6 +53,18 @@ const AccountNav = () => {
       >
         {isSigningOut ? "Đang đăng xuất..." : "Đăng xuất"}
       </button>
+      {/* Backend chặn admin tự khóa nên không hiển thị cho admin */}
+      {!isAdmin && (
+        <Link
+          href={DISABLE_HREF}
+          aria-current={pathname === DISABLE_HREF ? "page" : undefined}
+          className={`text-sm text-neutral-500 hover:text-red-600 ${
+            pathname === DISABLE_HREF ? "underline" : "hover:underline"
+          }`}
+        >
+          Vô hiệu hóa tài khoản
+        </Link>
+      )}
     </nav>
   );
 };

@@ -28,6 +28,7 @@ const LoginForm = () => {
   const [view, setView] = useState<"login" | "activate" | "forgot">("login");
   const [inactiveEmail, setInactiveEmail] = useState("");
   const [error, setError] = useState("");
+  const [isDisabledAccount, setIsDisabledAccount] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const backToLogin = () => setView("login");
@@ -44,6 +45,7 @@ const LoginForm = () => {
     const password = String(form.get("password"));
 
     setError("");
+    setIsDisabledAccount(false);
     setIsSubmitting(true);
     try {
       const res = await authenticate(username, password);
@@ -53,6 +55,8 @@ const LoginForm = () => {
         if (res.code === 2) {
           setInactiveEmail(username);
           setView("activate");
+        } else if (res.code === 3) {
+          setIsDisabledAccount(true);
         } else if (res.code === 1) {
           setError("Email hoặc mật khẩu không đúng.");
         } else {
@@ -83,6 +87,16 @@ const LoginForm = () => {
           Kích hoạt tài khoản thành công. Vui lòng đăng nhập.
         </p>
       )}
+      {searchParams.get("disabled") === "1" && (
+        <p role="status" className="pb-4">
+          Tài khoản đã được vô hiệu hóa.
+        </p>
+      )}
+      {searchParams.get("restored") === "1" && (
+        <p role="status" className="pb-4">
+          Khôi phục tài khoản thành công. Vui lòng đăng nhập.
+        </p>
+      )}
       <form onSubmit={onSubmit}>
         <AuthField
           label="Email"
@@ -99,6 +113,14 @@ const LoginForm = () => {
           required
         />
         <AuthError message={error} />
+        {isDisabledAccount && (
+          <p role="alert" className="pb-4">
+            Tài khoản đã bị vô hiệu hóa.{" "}
+            <Link href="/auth/restore" className="underline">
+              Khôi phục tài khoản
+            </Link>
+          </p>
+        )}
         <AuthSubmit isSubmitting={isSubmitting}>Đăng nhập</AuthSubmit>
       </form>
       <div className="flex items-center justify-between gap-4 pt-6">

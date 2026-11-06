@@ -1,3 +1,4 @@
+import { OrderStats } from "@/components/admin/resource.stats";
 import { getAuthHeader } from "@/utils/session";
 import OrderTable from "@/components/admin/order.table";
 import { IOrder } from "@/components/admin/order.detail.drawer";
@@ -23,7 +24,7 @@ interface IProps {
   }>;
 }
 
-const ManageOrdersPage = async ({ searchParams }: IProps) => {
+const OrdersContent = async ({ searchParams }: IProps) => {
   const params = await searchParams;
 
   const current =
@@ -38,8 +39,7 @@ const ManageOrdersPage = async ({ searchParams }: IProps) => {
 
   const orderCode =
     typeof params.orderCode === "string" ? params.orderCode.trim() : "";
-  const status =
-    typeof params.status === "string" ? params.status.trim() : "";
+  const status = typeof params.status === "string" ? params.status.trim() : "";
   const paymentStatus =
     typeof params.paymentStatus === "string" ? params.paymentStatus.trim() : "";
 
@@ -93,12 +93,16 @@ const ManageOrdersPage = async ({ searchParams }: IProps) => {
   }
 
   return (
-    <OrderTable
-      orders={response.data.results}
-      meta={response.data.meta}
-    />
+    <OrderTable orders={response.data.results} meta={response.data.meta} />
   );
 };
 
-export default ManageOrdersPage;
+// Thẻ thống kê tự tải dữ liệu riêng nên không phụ thuộc các nhánh lỗi của bảng
+const ManageOrdersPage = (props: IProps) => (
+  <div>
+    <OrderStats />
+    <OrdersContent {...props} />
+  </div>
+);
 
+export default ManageOrdersPage;

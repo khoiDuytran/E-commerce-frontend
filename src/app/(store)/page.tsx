@@ -1,9 +1,15 @@
+import HeroBanner from "@/components/store/hero.banner";
 import StoreImage from "@/components/store/store.image";
 import { STORE_HERO_IMAGE } from "@/utils/store";
-import { getStoreProducts } from "@/utils/store.api";
+import { getStoreBanners, getStoreProducts } from "@/utils/store.api";
 import Link from "next/link";
 
 const HomePage = async () => {
+  // Banner do admin quản lý trong /dashboard/banners
+  const banners = await getStoreBanners();
+  if (banners.length > 0) return <HeroBanner banners={banners} />;
+
+  // Chưa có banner nào đang bật: giữ ảnh nền mặc định như trước
   const { results } = await getStoreProducts({
     sort: "-createdAt",
     pageSize: 1,

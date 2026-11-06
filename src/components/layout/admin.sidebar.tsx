@@ -4,6 +4,7 @@ import {
   AppstoreOutlined,
   AppstoreAddOutlined,
   FileTextOutlined,
+  PictureOutlined,
   PercentageOutlined,
   ShoppingOutlined,
   TeamOutlined,
@@ -27,44 +28,49 @@ const AdminSideBar = () => {
     if (pathname.includes("/dashboard/products")) return "products";
     if (pathname.includes("/dashboard/categories")) return "categories";
     if (pathname.includes("/dashboard/coupons")) return "coupons";
+    if (pathname.includes("/dashboard/banners")) return "banners";
     return "dashboard";
   };
 
   const items: MenuItem[] = [
     {
       key: "grp",
-      label: "Admin Panel",
       type: "group",
       children: [
         {
           key: "dashboard",
-          label: <Link href={"/dashboard"}>Dashboard</Link>,
+          label: <Link href={"/dashboard"}>Tổng quan</Link>,
           icon: <AppstoreOutlined />,
         },
         {
           key: "orders",
-          label: <Link href={"/dashboard/orders"}>Manage Orders</Link>,
+          label: <Link href={"/dashboard/orders"}>Đơn hàng</Link>,
           icon: <FileTextOutlined />,
         },
         {
           key: "products",
-          label: <Link href={"/dashboard/products"}>Manage Products</Link>,
+          label: <Link href={"/dashboard/products"}>Sản phẩm</Link>,
           icon: <ShoppingOutlined />,
         },
         {
           key: "users",
-          label: <Link href={"/dashboard/users"}>Manage Users</Link>,
+          label: <Link href={"/dashboard/users"}>Người dùng</Link>,
           icon: <TeamOutlined />,
         },
         {
           key: "categories",
-          label: <Link href={"/dashboard/categories"}>Manage Categories</Link>,
+          label: <Link href={"/dashboard/categories"}>Danh mục</Link>,
           icon: <AppstoreAddOutlined />,
         },
         {
           key: "coupons",
-          label: <Link href={"/dashboard/coupons"}>Manage Coupons</Link>,
+          label: <Link href={"/dashboard/coupons"}>Mã giảm giá</Link>,
           icon: <PercentageOutlined />,
+        },
+        {
+          key: "banners",
+          label: <Link href={"/dashboard/banners"}>Banner trang chủ</Link>,
+          icon: <PictureOutlined />,
         },
       ],
     },

@@ -1,3 +1,4 @@
+import { CategoryStats } from "@/components/admin/resource.stats";
 import { getAuthHeader } from "@/utils/session";
 import CategoryTable from "@/components/admin/category.table";
 import { sendRequest } from "@/utils/api";
@@ -30,7 +31,7 @@ interface IProps {
   }>;
 }
 
-const ManageCategoriesPage = async ({ searchParams }: IProps) => {
+const CategoriesContent = async ({ searchParams }: IProps) => {
   const params = await searchParams;
   const current =
     params.current &&
@@ -64,7 +65,9 @@ const ManageCategoriesPage = async ({ searchParams }: IProps) => {
     });
     if (response?.data?.results && response.data.meta) {
       for (let page = 2; page <= response.data.meta.pages; page += 1) {
-        const nextResponse = await sendRequest<IBackendRes<CategoryListResponse>>({
+        const nextResponse = await sendRequest<
+          IBackendRes<CategoryListResponse>
+        >({
           url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/category`,
           method: "GET",
           queryParams: { current: page, pageSize: 100 },
@@ -133,5 +136,13 @@ const ManageCategoriesPage = async ({ searchParams }: IProps) => {
     />
   );
 };
+
+// Thẻ thống kê tự tải dữ liệu riêng nên không phụ thuộc các nhánh lỗi của bảng
+const ManageCategoriesPage = (props: IProps) => (
+  <div>
+    <CategoryStats />
+    <CategoriesContent {...props} />
+  </div>
+);
 
 export default ManageCategoriesPage;

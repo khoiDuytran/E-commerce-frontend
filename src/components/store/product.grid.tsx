@@ -28,6 +28,8 @@ export const ProductCard = ({
   onRemovedFromWishlist?: () => void;
 }) => {
   const [firstImage, hoverImage] = product.images;
+  // stock của sản phẩm là tổng tồn các biến thể đang bật (backend đồng bộ)
+  const isSoldOut = product.stock <= 0;
 
   return (
     // Nút yêu thích nằm cạnh link, không lồng trong thẻ <a>
@@ -39,13 +41,21 @@ export const ProductCard = ({
             alt={product.name}
             sizes="(min-width: 768px) 25vw, 50vw"
           />
-          {hoverImage && (
+          {hoverImage && !isSoldOut && (
             <StoreImage
               src={hoverImage}
               alt=""
               sizes="(min-width: 768px) 25vw, 50vw"
               className="opacity-0 transition-opacity duration-300 group-hover:opacity-100"
             />
+          )}
+          {/* Lớp phủ hết hàng: vẫn nằm trong link để khách bấm xem chi tiết */}
+          {isSoldOut && (
+            <div className="absolute inset-0 flex items-center justify-center bg-white/20 backdrop-blur-md">
+              <span className="text-xs font-medium text-black">
+                Out Of Stock
+              </span>
+            </div>
           )}
         </div>
         <h2 className="mt-3 uppercase">{product.name}</h2>
@@ -54,9 +64,7 @@ export const ProductCard = ({
             price={product.basePrice}
             originalPrice={product.originalPrice}
           />
-          {product.stock === 0 && (
-            <span className="text-neutral-600">Hết hàng</span>
-          )}
+          {isSoldOut && <span className="text-neutral-600">Hết hàng</span>}
         </div>
       </Link>
       <div className="absolute top-2 right-2">

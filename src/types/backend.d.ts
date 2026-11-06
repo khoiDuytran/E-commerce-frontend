@@ -42,7 +42,58 @@ declare global {
     name?: string;
     phone?: string;
     address?: string;
+    role?: UserRole;
+    isActive?: boolean;
+    isDisabled?: boolean;
   }
+
+  interface IUserStats {
+    total: number;
+    admins: number;
+    active: number;
+    unverified: number;
+    disabled: number;
+    newThisMonth: number;
+  }
+
+  interface ICategoryStats {
+    total: number;
+    active: number;
+    hidden: number;
+    root: number;
+    children: number;
+  }
+
+  interface ICouponStats {
+    total: number;
+    running: number;
+    upcoming: number;
+    ended: number;
+    used: number;
+  }
+
+  interface IOrderStats {
+    total: number;
+    today: number;
+    pending: number;
+    processing: number;
+    delivered: number;
+    cancelled: number;
+    returns: number;
+    revenue: number;
+  }
+
+  interface IProductStats {
+    total: number;
+    active: number;
+    hidden: number;
+    lowStock: number;
+    outOfStock: number;
+    lowStockThreshold: number;
+    sold: number;
+  }
+
+  type UserRole = "ADMIN" | "USER";
 
   interface ILogin {
     user: {
@@ -80,5 +131,22 @@ declare global {
   interface IPushSubscriptionInput {
     endpoint: string;
     keys: { p256dh: string; auth: string };
+  }
+
+  type IBannerMediaType = "image" | "video";
+
+  // Banner trang chủ mà khách nhìn thấy (GET /banner/active)
+  interface IStoreBanner {
+    _id: string;
+    title: string;
+    mediaType: IBannerMediaType;
+    mediaUrl: string;
+    link?: string;
+  }
+
+  interface IBannerRecord extends IStoreBanner {
+    sortOrder: number;
+    isActive: boolean;
+    createdAt?: string;
   }
 }

@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { IUser } from "./types/next-auth";
 import {
+  DisabledAccountError,
   InactiveAccountError,
   InvalidEmailPasswordError,
 } from "./utils/errors";
@@ -55,6 +56,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           throw new InvalidEmailPasswordError();
         } else if (response.status === 400) {
           throw new InactiveAccountError();
+        } else if (response.status === 403) {
+          throw new DisabledAccountError();
         } else {
           throw new Error("Internal server error");
         }

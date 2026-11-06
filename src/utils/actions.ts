@@ -4,6 +4,7 @@ import { sendRequest, sendRequestFile } from "./api";
 import { getAuthHeader } from "./session";
 import { updateTag } from "next/cache";
 import {
+  DisabledAccountError,
   InactiveAccountError,
   InvalidEmailPasswordError,
 } from "./errors";
@@ -29,6 +30,11 @@ export async function authenticate(username: string, password: string) {
         error: type,
         code: 2,
       };
+    } else if (type === DisabledAccountError.type) {
+      return {
+        error: type,
+        code: 3,
+      };
     } else {
       return {
         error: "Internal server error",
@@ -43,6 +49,7 @@ interface UserPayload {
   email: string;
   password: string;
   name: string;
+  role: UserRole;
 }
 
 export const handleCreateUserAction = async (data: UserPayload) => {
@@ -82,6 +89,21 @@ export const handleDeleteUserAction = async (id: string) => {
     headers: authHeader,
   });
 
+  updateTag("list-users");
+  return res;
+};
+
+export const handleUpdateUserStatusAction = async (
+  id: string,
+  isDisabled: boolean,
+) => {
+  const authHeader = await getAuthHeader();
+  const res = await sendRequest<IBackendRes<{ user: unknown }>>({
+    url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/status`,
+    method: "PATCH",
+    headers: authHeader,
+    body: { _id: id, isDisabled },
+  });
   updateTag("list-users");
   return res;
 };
@@ -205,6 +227,72 @@ export const handleDeleteImagesAction = async (urls: string[]) => {
   });
 };
 
+// Chữ ký để trình duyệt tải video thẳng lên Cloudinary, không qua server action
+export interface VideoUploadSignature {
+  uploadUrl: string;
+  apiKey: string;
+  signature: string;
+  timestamp: number;
+  public_id: string;
+  allowed_formats: string;
+}
+
+export const handleGetVideoUploadSignatureAction = async () => {
+  const authHeader = await getAuthHeader();
+  return sendRequest<IBackendRes<VideoUploadSignature>>({
+    url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/cloudinary/videos/signature`,
+    method: "POST",
+    headers: authHeader,
+  });
+};
+
+// ================= BANNER ACTIONS =================
+interface BannerData {
+  title: string;
+  mediaType: IBannerMediaType;
+  mediaUrl: string;
+  link?: string | null;
+  sortOrder?: number;
+  isActive?: boolean;
+}
+
+export const handleCreateBannerAction = async (data: BannerData) => {
+  const authHeader = await getAuthHeader();
+  const res = await sendRequest<IBackendRes<{ banner: IBannerRecord }>>({
+    url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/banner`,
+    method: "POST",
+    headers: authHeader,
+    body: data,
+  });
+  updateTag("list-banners");
+  return res;
+};
+
+export const handleUpdateBannerAction = async (
+  data: Partial<BannerData> & { _id: string },
+) => {
+  const authHeader = await getAuthHeader();
+  const res = await sendRequest<IBackendRes<{ banner: IBannerRecord }>>({
+    url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/banner`,
+    method: "PATCH",
+    headers: authHeader,
+    body: data,
+  });
+  updateTag("list-banners");
+  return res;
+};
+
+export const handleDeleteBannerAction = async (id: string) => {
+  const authHeader = await getAuthHeader();
+  const res = await sendRequest<IBackendRes<unknown>>({
+    url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/banner/${encodeURIComponent(id)}`,
+    method: "DELETE",
+    headers: authHeader,
+  });
+  updateTag("list-banners");
+  return res;
+};
+
 // ================= PRODUCT ACTIONS =================
 export interface ProductPayload {
   name: string;
@@ -221,7 +309,8 @@ export interface ProductPayload {
   // Giá nhập, chỉ admin thấy; null khi sửa để xoá
   costPrice?: number | null;
   tags?: string[];
-  stock: number;
+  // Bỏ trống khi sản phẩm có biến thể: backend tự tính từ tổng các biến thể
+  stock?: number;
   isActive?: boolean;
 }
 
@@ -281,7 +370,9 @@ export interface VariantPayload {
 
 export const handleGetVariantsByProductAction = async (productId: string) => {
   const authHeader = await getAuthHeader();
-  const res = await sendRequest<IBackendRes<{ results: unknown[]; meta: IPageMeta }>>({
+  const res = await sendRequest<
+    IBackendRes<{ results: unknown[]; meta: IPageMeta }>
+  >({
     url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/product-variants/admin/all`,
     method: "GET",
     queryParams: {
@@ -326,7 +417,10 @@ export const handleUpdateVariantAction = async (
   return res;
 };
 
-export const handleDeleteVariantAction = async (id: string, productId: string) => {
+export const handleDeleteVariantAction = async (
+  id: string,
+  productId: string,
+) => {
   const authHeader = await getAuthHeader();
   const res = await sendRequest<IBackendRes<unknown>>({
     url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/product-variants/${encodeURIComponent(id)}`,
@@ -337,7 +431,6 @@ export const handleDeleteVariantAction = async (id: string, productId: string) =
   updateTag("list-products");
   return res;
 };
-
 
 // ================= ORDER ACTIONS =================
 export interface UpdateOrderPayload {
@@ -460,6 +553,28 @@ export const handleUpdateProfileAction = async (data: {
   });
 };
 
+// Backend kiểm tra email khớp tài khoản đang đăng nhập rồi gửi mã xác nhận
+export const handleRequestDisableCodeAction = async (email: string) => {
+  const authHeader = await getAuthHeader();
+  return sendRequest<IBackendRes<{ email: string }>>({
+    url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/me/disable/code`,
+    method: "POST",
+    headers: authHeader,
+    body: { email },
+  });
+};
+
+// Backend thu hồi refresh token; client tự đăng xuất sau khi gọi thành công
+export const handleDisableMyAccountAction = async (code: string) => {
+  const authHeader = await getAuthHeader();
+  return sendRequest<IBackendRes<unknown>>({
+    url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/me/disable`,
+    method: "PATCH",
+    headers: authHeader,
+    body: { code },
+  });
+};
+
 export const handleCreateAddressAction = async (
   data: IShippingAddress & { isDefault?: boolean },
 ) => {
@@ -505,9 +620,7 @@ export const handleSetDefaultAddressAction = async (id: string) => {
 // Backend kiểm tra payment thuộc về user và đơn còn mở, rồi cấp lại link thanh toán
 export const handleRetryPaymentAction = async (paymentId: string) => {
   const authHeader = await getAuthHeader();
-  return sendRequest<
-    IBackendRes<{ paymentInfo?: { checkoutUrl: string } }>
-  >({
+  return sendRequest<IBackendRes<{ paymentInfo?: { checkoutUrl: string } }>>({
     url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/payments/${encodeURIComponent(paymentId)}/retry`,
     method: "POST",
     headers: authHeader,

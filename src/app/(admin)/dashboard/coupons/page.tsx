@@ -1,3 +1,4 @@
+import { CouponStats } from "@/components/admin/resource.stats";
 import { getAuthHeader } from "@/utils/session";
 import CouponTable from "@/components/admin/coupon.table";
 import { sendRequest } from "@/utils/api";
@@ -34,7 +35,7 @@ interface IProps {
   }>;
 }
 
-const ManageCouponsPage = async ({ searchParams }: IProps) => {
+const CouponsContent = async ({ searchParams }: IProps) => {
   const params = await searchParams;
   const current =
     params.current &&
@@ -98,5 +99,13 @@ const ManageCouponsPage = async ({ searchParams }: IProps) => {
     <CouponTable coupons={response.data.results} meta={response.data.meta} />
   );
 };
+
+// Thẻ thống kê tự tải dữ liệu riêng nên không phụ thuộc các nhánh lỗi của bảng
+const ManageCouponsPage = (props: IProps) => (
+  <div>
+    <CouponStats />
+    <CouponsContent {...props} />
+  </div>
+);
 
 export default ManageCouponsPage;

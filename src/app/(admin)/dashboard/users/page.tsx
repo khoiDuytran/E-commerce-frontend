@@ -1,4 +1,6 @@
+import { auth } from "@/auth";
 import { getAuthHeader } from "@/utils/session";
+import { UserStats } from "@/components/admin/resource.stats";
 import UserTable from "@/components/admin/user.table";
 import { sendRequest } from "@/utils/api";
 import { toErrorText } from "@/utils/store";
@@ -16,7 +18,7 @@ const ManageUserPage = async (props: IProps) => {
 
   const current = Number(searchParams.current ?? 1);
   const pageSize = Number(searchParams.pageSize ?? 10);
-  const authHeader = await getAuthHeader();
+  const [authHeader, session] = await Promise.all([getAuthHeader(), auth()]);
 
   let res: IBackendRes<{ results: IUserRecord[]; meta: IPageMeta }> | undefined;
   let error: string | undefined;
@@ -44,9 +46,11 @@ const ManageUserPage = async (props: IProps) => {
 
   return (
     <div>
+      <UserStats />
       <UserTable
         users={res?.data?.results ?? []}
         meta={res?.data?.meta ?? { current, pageSize, pages: 0, total: 0 }}
+        currentUserId={session?.user?._id}
         error={error}
       />
     </div>

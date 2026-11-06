@@ -87,6 +87,10 @@ const ProductDetail = ({ product, variants }: IProps) => {
     : product.originalPrice;
   const stock = hasVariants ? (matchedVariant?.stock ?? 0) : product.stock;
   const isChoosing = hasVariants && !matchedVariant;
+  // Hết hàng toàn bộ: không còn biến thể nào còn hàng (hoặc sản phẩm không biến thể hết kho)
+  const isSoldOut = hasVariants
+    ? variants.every((variant) => variant.stock <= 0)
+    : product.stock <= 0;
 
   // Giá trị còn mua được khi giữ nguyên các lựa chọn khác
   const isOptionAvailable = (key: string, value: string) =>
@@ -198,7 +202,8 @@ const ProductDetail = ({ product, variants }: IProps) => {
                     .filter(Boolean),
                 ),
               ].map((value) => {
-                const isAvailable = isOptionAvailable(key, value);
+                const isAvailable =
+                  !isSoldOut && isOptionAvailable(key, value);
                 const isSelected = selected[key] === value;
                 return (
                   <button
@@ -225,14 +230,25 @@ const ProductDetail = ({ product, variants }: IProps) => {
           </fieldset>
         ))}
 
-        <button
-          type="button"
-          disabled={isChoosing || stock === 0}
-          onClick={onAddToCart}
-          className="mt-6 w-full cursor-pointer rounded-full bg-black py-4 font-medium text-white disabled:cursor-not-allowed disabled:bg-neutral-300 disabled:text-neutral-700"
-        >
-          {buttonLabel}
-        </button>
+        {isSoldOut ? (
+          // Hết hàng: ẩn nút thêm vào giỏ, chỉ báo trạng thái
+          <p
+            role="status"
+            className="mt-6 w-full rounded-full border border-neutral-300 py-4 text-center font-medium text-neutral-600"
+          >
+            Out Of Stock
+          </p>
+        ) : (
+          <button
+            type="button"
+            disabled={isChoosing || stock === 0}
+            onClick={onAddToCart}
+            className="mt-6 w-full cursor-pointer rounded-full bg-black py-4 font-medium text-white disabled:cursor-not-allowed disabled:bg-neutral-300 disabled:text-neutral-700"
+          >
+            {buttonLabel}
+          </button>
+        )}
+        {/* Giữ nút yêu thích cả khi hết hàng: khách được báo khi sản phẩm có hàng lại */}
         <div className="mt-3">
           <WishlistButton
             productId={product._id}

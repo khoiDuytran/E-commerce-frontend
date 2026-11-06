@@ -2,7 +2,7 @@
 import AdminNotificationBell from "@/components/admin/admin.notification.bell";
 import { AdminContext } from "@/library/admin.context";
 import { disablePushBeforeSignOut } from "@/library/web.push";
-import {
+import Icon, {
   DownOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -12,6 +12,7 @@ import type { MenuProps } from "antd";
 import { Button, Dropdown, Layout, Space } from "antd";
 import { signOut } from "next-auth/react";
 import { useContext } from "react";
+import { UserIcon } from "../store/store.icons";
 
 const onSignOut = async () => {
   // Gỡ Web Push để máy dùng chung không nhận thông báo admin sau khi thoát
@@ -60,7 +61,7 @@ const AdminHeader = ({ email }: { email?: string | null }) => {
             className="leading-none text-inherit!"
           >
             <Space>
-              Welcome {email ?? ""}
+              <UserIcon /> {email ?? ""}
               <DownOutlined />
             </Space>
           </a>

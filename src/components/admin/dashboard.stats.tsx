@@ -12,12 +12,15 @@ import {
     Statistic,
     Table,
     Tag,
+    Tooltip,
     Typography,
 } from "antd";
 import {
     ArrowDownOutlined,
     ArrowUpOutlined,
     DollarOutlined,
+    InfoCircleOutlined,
+    RiseOutlined,
     ShoppingCartOutlined,
     TeamOutlined,
     WarningOutlined,
@@ -48,6 +51,13 @@ interface IPendingOrder {
     items?: unknown[];
 }
 
+interface IProfitPeriod {
+    profit: number;
+    netSales: number;
+    orders: number;
+    margin: number | null;
+}
+
 export interface IDashboardStats {
     kpi: {
         revenue: {
@@ -68,6 +78,12 @@ export interface IDashboardStats {
         customers: { total: number; newThisMonth: number };
         products: { activeTotal: number; lowStockTotal: number };
         pendingRefunds: number;
+        profit: {
+            total: IProfitPeriod;
+            thisMonth: IProfitPeriod;
+            lastMonth: IProfitPeriod;
+            ordersMissingCost: number;
+        };
     };
     charts: {
         revenueLast7Days: { _id: string; revenue: number; ordersCount: number }[];
@@ -111,6 +127,18 @@ const STATUS_LABEL: Record<string, { label: string; color: string }> = {
 const getStatus = (status: string) =>
     STATUS_LABEL[status.toUpperCase()] ?? { label: status, color: "default" };
 
+// % thay đổi so với kỳ trước; null khi kỳ trước bằng 0 (không chia được)
+const percentChange = (current: number, previous: number) =>
+    previous !== 0 ? ((current - previous) / Math.abs(previous)) * 100 : null;
+
+const Growth = ({ value }: { value: number | null }) =>
+    value === null ? null : (
+        <Text type={value >= 0 ? "success" : "danger"}>
+            {value >= 0 ? <ArrowUpOutlined /> : <ArrowDownOutlined />}{" "}
+            {Math.abs(value).toFixed(1)}%
+        </Text>
+    );
+
 /* ---------- Component ---------- */
 const DashboardStats = ({ data, error }: IProps) => {
     if (error || !data) {
@@ -129,12 +157,15 @@ const DashboardStats = ({ data, error }: IProps) => {
     const { kpi, charts, topSellingProducts, recentPendingOrders, lowStockList } =
         data;
 
-    const growth =
-        kpi.revenue.lastMonth > 0
-            ? ((kpi.revenue.thisMonth - kpi.revenue.lastMonth) /
-                kpi.revenue.lastMonth) *
-            100
-            : null;
+    const revenueGrowth = percentChange(
+        kpi.revenue.thisMonth,
+        kpi.revenue.lastMonth,
+    );
+    const { profit } = kpi;
+    const profitGrowth = percentChange(
+        profit.thisMonth.profit,
+        profit.lastMonth.profit,
+    );
 
     const maxRevenue = Math.max(
         ...charts.revenueLast7Days.map((d) => d.revenue),
@@ -213,26 +244,65 @@ const DashboardStats = ({ data, error }: IProps) => {
                 Thống kê tổng quan
             </Title>
 
-            {/* KPI */}
+            {/* KPI: các thẻ cùng hàng cao bằng nhau (h-full) */}
             <Row gutter={[16, 16]}>
                 <Col xs={24} sm={12} xl={6}>
-                    <Card>
+                    <Card className="h-full">
                         <Statistic
                             title="Doanh thu tháng này"
                             value={kpi.revenue.thisMonth}
                             formatter={(v) => formatVND(Number(v))}
                             prefix={<DollarOutlined />}
                         />
-                        {growth !== null && (
-                            <Text type={growth >= 0 ? "success" : "danger"}>
-                                {growth >= 0 ? <ArrowUpOutlined /> : <ArrowDownOutlined />}{" "}
-                                {Math.abs(growth).toFixed(1)}% so với tháng trước
+                        <div>
+                            <Growth value={revenueGrowth} />{" "}
+                            <Text type="secondary">
+                                {revenueGrowth === null && kpi.revenue.lastMonth === 0
+                                    ? "Tháng trước chưa có doanh thu"
+                                    : `so với tháng trước (${formatVND(kpi.revenue.lastMonth)})`}
                             </Text>
+                        </div>
+                    </Card>
+                </Col>
+                <Col xs={24} sm={12} xl={6}>
+                    <Card className="h-full">
+                        <Statistic
+                            title="Lợi nhuận gộp tháng này"
+                            value={profit.thisMonth.profit}
+                            formatter={(v) => formatVND(Number(v))}
+                            prefix={<RiseOutlined />}
+                            styles={{
+                                content: {
+                                    color: profit.thisMonth.profit < 0 ? "#cf1322" : "#389e0d",
+                                },
+                            }}
+                        />
+                        <div>
+                            <Text type="secondary">
+                                Biên lợi nhuận{" "}
+                                {profit.thisMonth.margin === null
+                                    ? "—"
+                                    : `${profit.thisMonth.margin}%`}
+                            </Text>
+                            {profitGrowth !== null && (
+                                <>
+                                    {" · "}
+                                    <Growth value={profitGrowth} />
+                                </>
+                            )}
+                        </div>
+                        {profit.ordersMissingCost > 0 && (
+                            <Tooltip title="Đơn có sản phẩm chưa nhập giá vốn lúc đặt hàng (gồm đơn cũ) nên không tính được lợi nhuận.">
+                                <Text type="warning" className="cursor-help text-xs">
+                                    <InfoCircleOutlined /> {profit.ordersMissingCost} đơn
+                                    chưa có giá vốn, không tính
+                                </Text>
+                            </Tooltip>
                         )}
                     </Card>
                 </Col>
                 <Col xs={24} sm={12} xl={6}>
-                    <Card>
+                    <Card className="h-full">
                         <Statistic
                             title="Doanh thu hôm nay"
                             value={kpi.revenue.today}
@@ -242,7 +312,7 @@ const DashboardStats = ({ data, error }: IProps) => {
                     </Card>
                 </Col>
                 <Col xs={24} sm={12} xl={6}>
-                    <Card>
+                    <Card className="h-full">
                         <Statistic
                             title="Tổng đơn hàng"
                             value={kpi.orders.total}
@@ -252,7 +322,7 @@ const DashboardStats = ({ data, error }: IProps) => {
                     </Card>
                 </Col>
                 <Col xs={24} sm={12} xl={6}>
-                    <Card>
+                    <Card className="h-full">
                         <Statistic
                             title="Khách hàng"
                             value={kpi.customers.total}
@@ -264,7 +334,7 @@ const DashboardStats = ({ data, error }: IProps) => {
                     </Card>
                 </Col>
                 <Col xs={24} sm={12} xl={6}>
-                    <Card>
+                    <Card className="h-full">
                         <Statistic
                             title="Sản phẩm đang bán"
                             value={kpi.products.activeTotal}
@@ -272,7 +342,7 @@ const DashboardStats = ({ data, error }: IProps) => {
                     </Card>
                 </Col>
                 <Col xs={24} sm={12} xl={6}>
-                    <Card>
+                    <Card className="h-full">
                         <Statistic
                             title="Sắp hết hàng"
                             value={kpi.products.lowStockTotal}
@@ -282,7 +352,7 @@ const DashboardStats = ({ data, error }: IProps) => {
                     </Card>
                 </Col>
                 <Col xs={24} sm={12} xl={6}>
-                    <Card>
+                    <Card className="h-full">
                         <Statistic
                             title="Yêu cầu hoàn hàng chờ duyệt"
                             value={kpi.pendingRefunds}
@@ -294,21 +364,12 @@ const DashboardStats = ({ data, error }: IProps) => {
                         />
                     </Card>
                 </Col>
-                <Col xs={24} sm={12} xl={6}>
-                    <Card>
-                        <Statistic
-                            title="Tháng trước"
-                            value={kpi.revenue.lastMonth}
-                            formatter={(v) => formatVND(Number(v))}
-                        />
-                    </Card>
-                </Col>
             </Row>
 
             {/* Charts */}
             <Row gutter={[16, 16]} className="mt-4">
                 <Col xs={24} lg={14}>
-                    <Card title="Doanh thu 7 ngày gần nhất">
+                    <Card title="Doanh thu 7 ngày gần nhất" className="h-full">
                         {charts.revenueLast7Days.length === 0 ? (
                             <Empty description="Chưa có dữ liệu" />
                         ) : (
@@ -334,7 +395,7 @@ const DashboardStats = ({ data, error }: IProps) => {
                     </Card>
                 </Col>
                 <Col xs={24} lg={10}>
-                    <Card title="Phân bố trạng thái đơn hàng">
+                    <Card title="Phân bố trạng thái đơn hàng" className="h-full">
                         {charts.statusDistribution.length === 0 ? (
                             <Empty description="Chưa có dữ liệu" />
                         ) : (
@@ -368,7 +429,7 @@ const DashboardStats = ({ data, error }: IProps) => {
             {/* Tables */}
             <Row gutter={[16, 16]} className="mt-4">
                 <Col xs={24} xl={14}>
-                    <Card title="Đơn hàng mới đang chờ duyệt">
+                    <Card title="Đơn hàng mới đang chờ duyệt" className="h-full">
                         <Table
                             rowKey="_id"
                             size="small"
@@ -381,7 +442,7 @@ const DashboardStats = ({ data, error }: IProps) => {
                     </Card>
                 </Col>
                 <Col xs={24} xl={10}>
-                    <Card title="Top 5 sản phẩm bán chạy">
+                    <Card title="Top 5 sản phẩm bán chạy" className="h-full">
                         <Table
                             rowKey="_id"
                             size="small"

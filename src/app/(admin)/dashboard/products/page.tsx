@@ -1,3 +1,4 @@
+import { ProductStats } from "@/components/admin/resource.stats";
 import { getAuthHeader } from "@/utils/session";
 import ProductTable, {
   ICategoryOption,
@@ -28,7 +29,7 @@ interface IProps {
   }>;
 }
 
-const ManageProductPage = async ({ searchParams }: IProps) => {
+const ProductContent = async ({ searchParams }: IProps) => {
   const params = await searchParams;
 
   const current =
@@ -126,5 +127,13 @@ const ManageProductPage = async ({ searchParams }: IProps) => {
     />
   );
 };
+
+// Thẻ thống kê tự tải dữ liệu riêng nên không phụ thuộc các nhánh lỗi của bảng
+const ManageProductPage = (props: IProps) => (
+  <div>
+    <ProductStats />
+    <ProductContent {...props} />
+  </div>
+);
 
 export default ManageProductPage;

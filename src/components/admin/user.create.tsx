@@ -1,5 +1,14 @@
 import { handleCreateUserAction } from "@/utils/actions";
-import { Modal, Input, Form, Row, Col, message, notification } from "antd";
+import {
+  Modal,
+  Input,
+  Form,
+  Row,
+  Col,
+  Select,
+  message,
+  notification,
+} from "antd";
 
 interface IProps {
   isCreateModalOpen: boolean;
@@ -10,7 +19,13 @@ interface ICreateUserForm {
   email: string;
   password: string;
   name: string;
+  role: UserRole;
 }
+
+const ROLE_OPTIONS = [
+  { value: "USER", label: "Người dùng" },
+  { value: "ADMIN", label: "Quản trị viên" },
+];
 
 const UserCreate = (props: IProps) => {
   const { isCreateModalOpen, setIsCreateModalOpen } = props;
@@ -48,6 +63,7 @@ const UserCreate = (props: IProps) => {
         onFinish={onFinish}
         layout="vertical"
         form={form}
+        initialValues={{ role: "USER" }}
       >
         <Row gutter={[15, 15]}>
           <Col span={24}>
@@ -75,6 +91,15 @@ const UserCreate = (props: IProps) => {
               rules={[{ required: true, message: "Vui lòng nhập tên!" }]}
             >
               <Input />
+            </Form.Item>
+          </Col>
+          <Col span={24}>
+            <Form.Item
+              label="Vai trò"
+              name="role"
+              rules={[{ required: true, message: "Vui lòng chọn vai trò!" }]}
+            >
+              <Select options={ROLE_OPTIONS} />
             </Form.Item>
           </Col>
         </Row>

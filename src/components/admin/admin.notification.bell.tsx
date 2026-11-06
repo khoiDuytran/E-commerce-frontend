@@ -150,12 +150,13 @@ const AdminNotificationBell = () => {
     >
       <Button
         type="text"
+        size="medium"
         aria-label={
           unreadCount > 0 ? `Thông báo, ${unreadCount} chưa đọc` : "Thông báo"
         }
         icon={
-          <Badge count={unreadCount} size="small" overflowCount={99}>
-            <BellOutlined className="text-lg" />
+          <Badge count={unreadCount} overflowCount={99}>
+            <BellOutlined style={{ fontSize: 18 }} />
           </Badge>
         }
       />

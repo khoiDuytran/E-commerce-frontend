@@ -54,7 +54,6 @@ export interface ICategoryOption {
   slug: string;
 }
 
-
 export interface IProduct {
   _id: string;
   name: string;
@@ -71,6 +70,8 @@ export interface IProduct {
   soldCount: number;
   stock: number;
   isActive: boolean;
+  // Có biến thể thì stock là tổng tồn các biến thể đang bật, backend tự cập nhật
+  variantCount?: number;
 }
 
 interface PaginationMeta {
@@ -123,12 +124,7 @@ const convertToSlug = (str: string) => {
     .replace(/-+$/g, "");
 };
 
-const ProductTable = ({
-  products,
-  categories,
-  meta,
-  error,
-}: IProps) => {
+const ProductTable = ({ products, categories, meta, error }: IProps) => {
   const paginationMeta = meta ?? DEFAULT_META;
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -147,9 +143,7 @@ const ProductTable = ({
   const [isVariantsModalOpen, setIsVariantsModalOpen] = useState(false);
 
   // Bộ lọc
-  const [searchName, setSearchName] = useState(
-    searchParams.get("name") || "",
-  );
+  const [searchName, setSearchName] = useState(searchParams.get("name") || "");
   const [selectedCategory, setSelectedCategory] = useState<string | undefined>(
     searchParams.get("category") || undefined,
   );
@@ -241,6 +235,8 @@ const ProductTable = ({
     }
   };
 
+  const hasVariants = (editingProduct?.variantCount ?? 0) > 0;
+
   const onFinish = async (values: ProductFormValues) => {
     setIsSaving(true);
     try {
@@ -253,7 +249,8 @@ const ProductTable = ({
         originalPrice:
           values.originalPrice ?? (editingProduct ? null : undefined),
         costPrice: values.costPrice ?? (editingProduct ? null : undefined),
-        stock: values.stock ?? 0,
+        // Sản phẩm có biến thể không gửi tồn kho: backend tự tính từ biến thể
+        ...(hasVariants ? {} : { stock: values.stock ?? 0 }),
         images: values.images ?? [],
         tags: values.tags ?? [],
         description: values.description?.trim() || undefined,
@@ -265,9 +262,9 @@ const ProductTable = ({
 
       const res = editingProduct
         ? await handleUpdateProductAction({
-          _id: editingProduct._id,
-          ...payload,
-        })
+            _id: editingProduct._id,
+            ...payload,
+          })
         : await handleCreateProductAction(payload);
 
       if (res?.data) {
@@ -369,7 +366,11 @@ const ProductTable = ({
       key: "category",
       render: (cat) => {
         const catName = typeof cat === "object" ? cat?.name : cat;
-        return catName ? <Tag color="blue">{catName}</Tag> : <span className="text-gray-400">---</span>;
+        return catName ? (
+          <Tag color="blue">{catName}</Tag>
+        ) : (
+          <span className="text-gray-400">---</span>
+        );
       },
     },
     {
@@ -417,9 +418,20 @@ const ProductTable = ({
       dataIndex: "stock",
       key: "stock",
       align: "center",
-      render: (stock: number) => (
-        <Tag color={stock > 0 ? "green" : "red"}>{stock} sp</Tag>
-      ),
+      render: (stock: number, record) => {
+        const tag = <Tag color={stock > 0 ? "green" : "red"}>{stock} sp</Tag>;
+        if (!record.variantCount) return tag;
+        return (
+          <Tooltip
+            title={`Tổng tồn kho của các biến thể đang bật (${record.variantCount} biến thể)`}
+          >
+            <span className="cursor-help">
+              {tag}
+              <div className="text-xs text-neutral-500">theo biến thể</div>
+            </span>
+          </Tooltip>
+        );
+      },
     },
     {
       title: "Đã bán",
@@ -451,7 +463,7 @@ const ProductTable = ({
           className="text-blue-600 border-blue-400"
           onClick={() => openVariantsModal(record)}
         >
-          Biến thể
+          Biến thể{record.variantCount ? ` (${record.variantCount})` : ""}
         </Button>
       ),
     },
@@ -613,7 +625,9 @@ const ProductTable = ({
               <Form.Item
                 name="name"
                 label="Tên sản phẩm"
-                rules={[{ required: true, message: "Vui lòng nhập tên sản phẩm" }]}
+                rules={[
+                  { required: true, message: "Vui lòng nhập tên sản phẩm" },
+                ]}
               >
                 <Input
                   placeholder="VD: Áo Thun Nam Thể Thao..."
@@ -708,9 +722,22 @@ const ProductTable = ({
               <Form.Item
                 name="stock"
                 label="Số lượng tồn kho"
-                rules={[{ required: true, message: "Vui lòng nhập số lượng" }]}
+                rules={
+                  hasVariants
+                    ? []
+                    : [{ required: true, message: "Vui lòng nhập số lượng" }]
+                }
+                extra={
+                  hasVariants
+                    ? "Tính từ tổng tồn các biến thể. Sửa tồn kho trong mục Biến thể."
+                    : undefined
+                }
               >
-                <InputNumber min={0} style={{ width: "100%" }} />
+                <InputNumber
+                  min={0}
+                  style={{ width: "100%" }}
+                  disabled={hasVariants}
+                />
               </Form.Item>
             </Col>
           </Row>
@@ -780,4 +807,3 @@ const ProductTable = ({
 };
 
 export default ProductTable;
-

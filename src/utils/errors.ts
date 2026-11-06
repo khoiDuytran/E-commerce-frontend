@@ -7,3 +7,7 @@ export class InvalidEmailPasswordError extends AuthError {
 export class InactiveAccountError extends AuthError {
   static type = "Tài khoản chưa được kích hoạt";
 }
+
+export class DisabledAccountError extends AuthError {
+  static type = "Tài khoản đã bị vô hiệu hóa";
+}

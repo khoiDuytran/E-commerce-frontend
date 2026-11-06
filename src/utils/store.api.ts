@@ -57,3 +57,17 @@ export const getStoreCategories = async () => {
   });
   return results;
 };
+
+// Banner trang chủ; backend lỗi thì trả rỗng để trang chủ dùng ảnh mặc định
+export const getStoreBanners = async (): Promise<IStoreBanner[]> => {
+  try {
+    const res = await sendRequest<IBackendRes<IStoreBanner[]>>({
+      url: `${BACKEND_URL}/api/banner/active`,
+      method: "GET",
+      nextOption: { cache: "no-store" },
+    });
+    return Array.isArray(res?.data) ? res.data : [];
+  } catch {
+    return [];
+  }
+};

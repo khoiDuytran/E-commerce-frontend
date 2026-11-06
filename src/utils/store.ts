@@ -4,6 +4,16 @@ export const STORE_NAME = process.env.NEXT_PUBLIC_STORE_NAME || "WHOKNOWSISM";
 export const STORE_HERO_IMAGE =
   "https://cdn.hstatic.net/files/200000320785/file/anonyig.io_instagram_alcyus.arc_3990379036470914455_40724191325.jpg";
 
+// Cloudinary tạo sẵn ảnh khung hình đầu của video: dùng làm poster khi video chưa tải xong
+export const getVideoPosterUrl = (videoUrl: string) => {
+  const marker = "/video/upload/";
+  if (!videoUrl.startsWith("https://res.cloudinary.com/")) return undefined;
+  if (!videoUrl.includes(marker)) return undefined;
+  return videoUrl
+    .replace(marker, `${marker}so_0/`)
+    .replace(/\.[a-z0-9]+$/i, ".jpg");
+};
+
 // Dùng chung một định dạng tiền cho mọi trang của cửa hàng
 export const formatVnd = (amount: number) =>
   `${new Intl.NumberFormat("vi-VN").format(amount)} VND`;

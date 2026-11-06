@@ -121,7 +121,8 @@ const ProductVariantsModal = ({ product, isOpen, onClose }: IProps) => {
   useEffect(() => {
     if (!openedProductId) return;
     let ignore = false;
-    form.resetFields();
+    // Không reset form ở đây: Form chỉ mount khi mở form thêm/sửa (lúc đó đã reset),
+    // gọi form khi chưa mount sẽ bị antd cảnh báo "not connected to any Form element"
     fetchVariants().then((results) => {
       if (ignore) return;
       if (results) setVariants(results);
@@ -130,7 +131,7 @@ const ProductVariantsModal = ({ product, isOpen, onClose }: IProps) => {
     return () => {
       ignore = true;
     };
-  }, [openedProductId, fetchVariants, form]);
+  }, [openedProductId, fetchVariants]);
 
   // Trả về false nếu chưa đóng được vì ảnh đang tải dở
   const cancelForm = () => {
