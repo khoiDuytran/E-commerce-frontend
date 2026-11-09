@@ -59,6 +59,10 @@ const LoginForm = () => {
           setIsDisabledAccount(true);
         } else if (res.code === 1) {
           setError("Email hoặc mật khẩu không đúng.");
+        } else if (res.code === 4) {
+          setError(
+            "Bạn đã đăng nhập sai quá nhiều lần. Vui lòng thử lại sau 5 phút.",
+          );
         } else {
           setError("Không thể đăng nhập lúc này. Vui lòng thử lại.");
         }

@@ -5,6 +5,7 @@ import {
   DisabledAccountError,
   InactiveAccountError,
   InvalidEmailPasswordError,
+  TooManyAttemptsError,
 } from "./utils/errors";
 import {
   readRefreshCookie,
@@ -58,6 +59,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           throw new InactiveAccountError();
         } else if (response.status === 403) {
           throw new DisabledAccountError();
+        } else if (response.status === 429) {
+          throw new TooManyAttemptsError();
         } else {
           throw new Error("Internal server error");
         }

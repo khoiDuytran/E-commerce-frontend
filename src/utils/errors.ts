@@ -11,3 +11,7 @@ export class InactiveAccountError extends AuthError {
 export class DisabledAccountError extends AuthError {
   static type = "Tài khoản đã bị vô hiệu hóa";
 }
+
+export class TooManyAttemptsError extends AuthError {
+  static type = "Đăng nhập sai quá nhiều lần";
+}

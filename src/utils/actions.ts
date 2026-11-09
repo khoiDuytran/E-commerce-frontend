@@ -7,6 +7,7 @@ import {
   DisabledAccountError,
   InactiveAccountError,
   InvalidEmailPasswordError,
+  TooManyAttemptsError,
 } from "./errors";
 
 export async function authenticate(username: string, password: string) {
@@ -34,6 +35,11 @@ export async function authenticate(username: string, password: string) {
       return {
         error: type,
         code: 3,
+      };
+    } else if (type === TooManyAttemptsError.type) {
+      return {
+        error: type,
+        code: 4,
       };
     } else {
       return {
