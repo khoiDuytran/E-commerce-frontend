@@ -164,6 +164,8 @@ const OrderTable = ({ orders, meta, error }: IProps) => {
         return <Tag color="purple">Đã nhận hàng trả</Tag>;
       case "REFUNDED":
         return <Tag color="volcano">Đã hoàn tiền</Tag>;
+      case "RETURN_REJECTED":
+        return <Tag color="default">Từ chối hoàn</Tag>;
       default:
         return <Tag>{status}</Tag>;
     }

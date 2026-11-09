@@ -490,6 +490,24 @@ export const handleDeleteOrderAction = async (id: string) => {
   return res;
 };
 
+// ================= REFUND ACTIONS (ADMIN) =================
+export const handleUpdateRefundAction = async (
+  id: string,
+  data: { status: RefundStatus; adminNote?: string },
+) => {
+  const authHeader = await getAuthHeader();
+  const res = await sendRequest<IBackendRes<unknown>>({
+    url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/refunds/${encodeURIComponent(id)}`,
+    method: "PATCH",
+    headers: authHeader,
+    body: data,
+  });
+  // Đổi trạng thái hoàn cũng đổi trạng thái đơn hàng
+  updateTag("list-refunds");
+  updateTag("list-orders");
+  return res;
+};
+
 // ================= STOREFRONT ACTIONS =================
 export const handleLookupCouponAction = async (
   rawCode: string,

@@ -149,4 +149,39 @@ declare global {
     isActive: boolean;
     createdAt?: string;
   }
+
+  type RefundStatus =
+    | "REQUESTED"
+    | "APPROVED"
+    | "RECEIVED"
+    | "REFUNDED"
+    | "REJECTED";
+
+  // Yêu cầu hoàn hàng ở trang admin: orderId và userId đã được populate
+  interface IRefundRecord {
+    _id: string;
+    orderCode: string;
+    reason: string;
+    description?: string;
+    status: RefundStatus;
+    refundAmount: number;
+    adminNote?: string;
+    refundedAt?: string;
+    createdAt: string;
+    // null khi đơn không còn tìm thấy payment (dữ liệu cũ)
+    paymentMethod: "COD" | "VNPAY" | null;
+    userId: { _id: string; name?: string; email: string } | null;
+    orderId: {
+      _id: string;
+      status: string;
+      total: number;
+      shippingAddress?: { fullName: string; phone: string };
+      items: {
+        productName: string;
+        variantName?: string;
+        quantity: number;
+        price: number;
+      }[];
+    } | null;
+  }
 }

@@ -6,6 +6,7 @@ import {
   FileTextOutlined,
   PictureOutlined,
   PercentageOutlined,
+  RollbackOutlined,
   ShoppingOutlined,
   TeamOutlined,
 } from "@ant-design/icons";
@@ -25,6 +26,7 @@ const AdminSideBar = () => {
   const getSelectedKey = () => {
     if (pathname.includes("/dashboard/users")) return "users";
     if (pathname.includes("/dashboard/orders")) return "orders";
+    if (pathname.includes("/dashboard/refunds")) return "refunds";
     if (pathname.includes("/dashboard/products")) return "products";
     if (pathname.includes("/dashboard/categories")) return "categories";
     if (pathname.includes("/dashboard/coupons")) return "coupons";
@@ -46,6 +48,11 @@ const AdminSideBar = () => {
           key: "orders",
           label: <Link href={"/dashboard/orders"}>Đơn hàng</Link>,
           icon: <FileTextOutlined />,
+        },
+        {
+          key: "refunds",
+          label: <Link href={"/dashboard/refunds"}>Hoàn hàng</Link>,
+          icon: <RollbackOutlined />,
         },
         {
           key: "products",
