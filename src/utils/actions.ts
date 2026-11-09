@@ -489,51 +489,25 @@ export const handleLookupCouponAction = async (
   rawCode: string,
 ): Promise<{ coupon?: IStoreCoupon; error?: string }> => {
   const code = rawCode.trim().toUpperCase();
-  // Mã đi vào filter của aqp nên chỉ nhận đúng định dạng
-  if (!/^[A-Z0-9_-]+$/.test(code)) return { error: "Mã giảm giá không hợp lệ" };
+  if (!/^[A-Z0-9_-]{1,50}$/.test(code)) {
+    return { error: "Mã giảm giá không hợp lệ" };
+  }
 
   const authHeader = await getAuthHeader();
-  const res = await sendRequest<
-    IBackendRes<{
-      results: Array<
-        IStoreCoupon & {
-          startDate: string;
-          endDate: string;
-          usageLimit: number;
-          usedCount: number;
-        }
-      >;
-    }>
-  >({
-    url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/coupon`,
+  // Backend chỉ trả mã còn dùng được, kèm các field cần để tính thử số tiền giảm
+  const res = await sendRequest<IBackendRes<IStoreCoupon>>({
+    url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/coupon/lookup`,
     method: "GET",
-    queryParams: { code, isActive: true, pageSize: 1 },
+    queryParams: { code },
     headers: authHeader,
     nextOption: { cache: "no-store" },
   });
 
-  const found = res?.data?.results?.[0];
-  const now = Date.now();
-  if (
-    !found ||
-    now < new Date(found.startDate).getTime() ||
-    now > new Date(found.endDate).getTime() ||
-    found.usedCount >= found.usageLimit
-  ) {
+  if (!res?.data?._id) {
     return { error: "Mã giảm giá không hợp lệ hoặc đã hết lượt sử dụng" };
   }
 
-  // Chỉ trả các trường cần để tính thử số tiền giảm
-  return {
-    coupon: {
-      _id: found._id,
-      code: found.code,
-      discountType: found.discountType,
-      discountValue: found.discountValue,
-      minOrderValue: found.minOrderValue,
-      maxDiscount: found.maxDiscount,
-    },
-  };
+  return { coupon: res.data };
 };
 
 // ================= ACCOUNT ACTIONS =================

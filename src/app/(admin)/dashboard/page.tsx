@@ -1,5 +1,3 @@
-"use server";
-
 import { getAuthHeader } from "@/utils/session";
 import DashboardStats, { IDashboardStats } from "@/components/admin/dashboard.stats";
 import { sendRequest } from "@/utils/api";
