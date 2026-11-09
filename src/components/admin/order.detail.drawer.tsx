@@ -342,7 +342,7 @@ const OrderDetailDrawer = ({
 
         {isCancelled && (
           <Alert
-            message="Đơn hàng đã bị hủy"
+            title="Đơn hàng đã bị hủy"
             description="Đơn hàng này đã bị hủy bỏ và tồn kho đã được hoàn trả lại cho hệ thống."
             type="error"
             showIcon
@@ -351,7 +351,7 @@ const OrderDetailDrawer = ({
 
         {isRefunded && (
           <Alert
-            message="Đơn hàng đã được hoàn tiền"
+            title="Đơn hàng đã được hoàn tiền"
             description="Đơn hàng đã hoàn tất quy trình hoàn hàng và hoàn tiền cho người mua."
             type="warning"
             showIcon

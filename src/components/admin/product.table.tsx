@@ -136,6 +136,8 @@ const ProductTable = ({ products, categories, meta, error }: IProps) => {
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  // Hộp thoại dạng hook để nhận theme và context của antd
+  const [modal, modalContextHolder] = Modal.useModal();
 
   // Quản lý modal biến thể
   const [selectedProductForVariants, setSelectedProductForVariants] =
@@ -293,12 +295,45 @@ const ProductTable = ({ products, categories, meta, error }: IProps) => {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const hideProduct = async (product: IProduct) => {
+    const res = await handleUpdateProductAction({
+      _id: product._id,
+      isActive: false,
+    });
+    if (res?.data) {
+      message.success(`Đã ẩn sản phẩm ${product.name}`);
+    } else {
+      notification.error({
+        title: "Không thể ẩn sản phẩm",
+        description: res?.message || "Vui lòng thử lại.",
+      });
+    }
+  };
+
+  const handleDelete = async (product: IProduct) => {
+    const id = product._id;
     setIsDeleting(id);
     try {
       const res = await handleDeleteProductAction(id);
       if (res && (+res.statusCode === 200 || +res.statusCode === 204)) {
         message.success("Xóa sản phẩm thành công");
+      } else if (+(res?.statusCode ?? 0) === 409) {
+        // Sản phẩm đã có đơn hàng: backend không cho xóa, đề nghị ẩn thay thế
+        if (product.isActive) {
+          modal.confirm({
+            title: "Không thể xóa sản phẩm",
+            content: `${res.message} Ẩn sản phẩm ngay bây giờ?`,
+            okText: "Ẩn sản phẩm",
+            cancelText: "Đóng",
+            onOk: () => hideProduct(product),
+          });
+        } else {
+          modal.info({
+            title: "Không thể xóa sản phẩm",
+            content: `${res.message} Sản phẩm này đang ẩn nên khách không còn thấy.`,
+            okText: "Đã hiểu",
+          });
+        }
       } else {
         notification.error({
           message: "Lỗi",
@@ -482,11 +517,11 @@ const ProductTable = ({ products, categories, meta, error }: IProps) => {
           </Tooltip>
           <Popconfirm
             title="Xác nhận xóa"
-            description="Bạn có chắc chắn muốn xóa sản phẩm này? Các biến thể liên quan cũng sẽ không hiển thị."
+            description="Sản phẩm và các biến thể sẽ bị xóa vĩnh viễn. Sản phẩm đã có đơn hàng chỉ ẩn được, không xóa được."
             okText="Xóa"
             cancelText="Hủy"
             okButtonProps={{ danger: true, loading: isDeleting === record._id }}
-            onConfirm={() => handleDelete(record._id)}
+            onConfirm={() => handleDelete(record)}
           >
             <Tooltip title="Xóa sản phẩm">
               <DeleteTwoTone
@@ -502,6 +537,7 @@ const ProductTable = ({ products, categories, meta, error }: IProps) => {
 
   return (
     <div className="space-y-4">
+      {modalContextHolder}
       {error && (
         <Alert
           title="Lỗi tải dữ liệu"

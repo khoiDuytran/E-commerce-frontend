@@ -147,7 +147,7 @@ const DashboardStats = ({ data, error }: IProps) => {
                 <Alert
                     type="error"
                     showIcon
-                    message="Không thể tải thống kê"
+                    title="Không thể tải thống kê"
                     description={error || "Dữ liệu không hợp lệ."}
                 />
             </div>

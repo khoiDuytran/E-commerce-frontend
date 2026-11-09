@@ -86,6 +86,8 @@ const ProductVariantsModal = ({ product, isOpen, onClose }: IProps) => {
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [form] = Form.useForm<VariantFormValues>();
+  // Hộp thoại dạng hook để nhận theme và context của antd
+  const [dialog, dialogContextHolder] = Modal.useModal();
 
   const productId = product?._id;
   const openedProductId = isOpen ? productId : undefined;
@@ -248,13 +250,48 @@ const ProductVariantsModal = ({ product, isOpen, onClose }: IProps) => {
     }
   };
 
-  const handleDeleteVariant = async (variantId: string) => {
+  const hideVariant = async (variant: IVariant) => {
+    if (!product?._id) return;
+    const res = await handleUpdateVariantAction({
+      _id: variant._id,
+      product: product._id,
+      isActive: false,
+    });
+    if (res?.data) {
+      message.success(`Đã ẩn biến thể ${variant.name}`);
+      await loadVariants();
+    } else {
+      notification.error({
+        title: "Không thể ẩn biến thể",
+        description: res?.message || "Vui lòng thử lại.",
+      });
+    }
+  };
+
+  const handleDeleteVariant = async (variant: IVariant) => {
     if (!product?._id) return;
     try {
-      const res = await handleDeleteVariantAction(variantId, product._id);
+      const res = await handleDeleteVariantAction(variant._id, product._id);
       if (res && (+res.statusCode === 200 || +res.statusCode === 204)) {
         message.success("Xóa biến thể thành công");
         await loadVariants();
+      } else if (+(res?.statusCode ?? 0) === 409) {
+        // Biến thể đã có đơn hàng: backend không cho xóa, đề nghị ẩn thay thế
+        if (variant.isActive) {
+          dialog.confirm({
+            title: "Không thể xóa biến thể",
+            content: `${res.message} Ẩn biến thể ngay bây giờ?`,
+            okText: "Ẩn biến thể",
+            cancelText: "Đóng",
+            onOk: () => hideVariant(variant),
+          });
+        } else {
+          dialog.info({
+            title: "Không thể xóa biến thể",
+            content: `${res.message} Biến thể này đang ẩn nên khách không còn chọn được.`,
+            okText: "Đã hiểu",
+          });
+        }
       } else {
         notification.error({
           message: "Lỗi",
@@ -364,11 +401,11 @@ const ProductVariantsModal = ({ product, isOpen, onClose }: IProps) => {
           />
           <Popconfirm
             title="Xác nhận xóa"
-            description="Bạn có chắc chắn muốn xóa biến thể này?"
+            description="Biến thể sẽ bị xóa vĩnh viễn. Biến thể đã có đơn hàng chỉ ẩn được, không xóa được."
             okText="Xóa"
             cancelText="Hủy"
             okButtonProps={{ danger: true }}
-            onConfirm={() => handleDeleteVariant(record._id)}
+            onConfirm={() => handleDeleteVariant(record)}
           >
             <Button
               type="text"
@@ -403,6 +440,8 @@ const ProductVariantsModal = ({ product, isOpen, onClose }: IProps) => {
         </Button>,
       ]}
     >
+      {/* Hộp thoại chỉ mở khi modal này đang mở nên đặt holder bên trong */}
+      {dialogContextHolder}
       <div className="py-2">
         <div className="flex justify-between items-center mb-4">
           <Space orientation="horizontal">
