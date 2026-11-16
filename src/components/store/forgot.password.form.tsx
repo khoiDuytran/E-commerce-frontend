@@ -7,28 +7,39 @@ import { AuthError, AuthField, AuthPanel, AuthSubmit } from "./auth.ui";
 
 const CONNECTION_ERROR = "Không kết nối được máy chủ. Vui lòng thử lại.";
 
+type Step = "email" | "code" | "password" | "done";
+
 const ForgotPasswordForm = ({ onBack }: { onBack: () => void }) => {
-  const [step, setStep] = useState<"email" | "reset" | "done">("email");
+  const [step, setStep] = useState<Step>("email");
   const [userEmail, setUserEmail] = useState("");
+  const [code, setCode] = useState("");
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const onSendCode = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const email = String(new FormData(event.currentTarget).get("email")).trim();
+  const goToStep = (next: Step) => {
     setError("");
+    setNotice("");
+    setStep(next);
+  };
+
+  // Gọi API và chỉ chuyển bước khi backend trả về data
+  const submit = async <T,>(
+    path: string,
+    body: Record<string, string>,
+    onSuccess: (data: T) => void,
+  ) => {
+    setError("");
+    setNotice("");
     setIsSubmitting(true);
     try {
-      const res = await sendRequest<IBackendRes<{ _id: string; email: string }>>(
-        {
-          url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/retry-password`,
-          method: "POST",
-          body: { email },
-        },
-      );
+      const res = await sendRequest<IBackendRes<T>>({
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/${path}`,
+        method: "POST",
+        body,
+      });
       if (res?.data) {
-        setUserEmail(res.data.email);
-        setStep("reset");
+        onSuccess(res.data);
       } else {
         setError(toErrorText(res?.message));
       }
@@ -39,10 +50,42 @@ const ForgotPasswordForm = ({ onBack }: { onBack: () => void }) => {
     }
   };
 
-  const onResetPassword = async (event: FormEvent<HTMLFormElement>) => {
+  // Bước 1: backend chỉ gửi mã khi email đã đăng ký tài khoản
+  const onSendCode = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const email = String(new FormData(event.currentTarget).get("email")).trim();
+    void submit<{ email: string }>("retry-password", { email }, (data) => {
+      setUserEmail(data.email);
+      goToStep("code");
+    });
+  };
+
+  const onResendCode = () => {
+    void submit<{ email: string }>(
+      "retry-password",
+      { email: userEmail },
+      () => setNotice("Đã gửi lại mã xác nhận mới. Mã cũ không còn dùng được."),
+    );
+  };
+
+  // Bước 2: kiểm tra mã trước khi cho nhập mật khẩu mới
+  const onCheckCode = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const value = String(new FormData(event.currentTarget).get("code")).trim();
+    void submit<{ isValid: boolean }>(
+      "check-reset-code",
+      { email: userEmail, code: value },
+      () => {
+        setCode(value);
+        goToStep("password");
+      },
+    );
+  };
+
+  // Bước 3: backend kiểm tra lại mã khi đổi mật khẩu
+  const onResetPassword = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
-    const code = String(form.get("code")).trim();
     const password = String(form.get("password"));
     const confirmPassword = String(form.get("confirmPassword"));
 
@@ -51,24 +94,11 @@ const ForgotPasswordForm = ({ onBack }: { onBack: () => void }) => {
       return;
     }
 
-    setError("");
-    setIsSubmitting(true);
-    try {
-      const res = await sendRequest<IBackendRes<{ isBeforeCheck: boolean }>>({
-        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/change-password`,
-        method: "POST",
-        body: { code, password, confirmPassword, email: userEmail },
-      });
-      if (res?.data) {
-        setStep("done");
-      } else {
-        setError(toErrorText(res?.message));
-      }
-    } catch {
-      setError(CONNECTION_ERROR);
-    } finally {
-      setIsSubmitting(false);
-    }
+    void submit<{ isBeforeCheck: boolean }>(
+      "change-password",
+      { code, password, confirmPassword, email: userEmail },
+      () => goToStep("done"),
+    );
   };
 
   return (
@@ -91,14 +121,48 @@ const ForgotPasswordForm = ({ onBack }: { onBack: () => void }) => {
       )}
 
       {/* key riêng để ô nhập của bước trước không giữ lại giá trị đã gõ */}
-      {step === "reset" && (
-        <form key="reset" onSubmit={onResetPassword}>
+      {step === "code" && (
+        <form key="code" onSubmit={onCheckCode}>
+          <p className="pb-4">
+            Mã xác nhận đã được gửi tới <strong>{userEmail}</strong>. Mã có
+            hiệu lực trong 5 phút.
+          </p>
           <AuthField
             label="Mã xác nhận"
             name="code"
             autoComplete="one-time-code"
             required
           />
+          {notice && (
+            <p role="status" className="pb-2 text-sm">
+              {notice}
+            </p>
+          )}
+          <AuthError message={error} />
+          <AuthSubmit isSubmitting={isSubmitting}>Xác nhận mã</AuthSubmit>
+          <div className="mt-4 flex justify-between gap-4 text-sm">
+            <button
+              type="button"
+              onClick={() => goToStep("email")}
+              className="cursor-pointer underline"
+            >
+              Đổi email
+            </button>
+            <button
+              type="button"
+              onClick={onResendCode}
+              disabled={isSubmitting}
+              className="cursor-pointer underline disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Gửi lại mã
+            </button>
+          </div>
+        </form>
+      )}
+
+      {step === "password" && (
+        <form key="password" onSubmit={onResetPassword}>
+          <p className="pb-4">Nhập mật khẩu mới cho {userEmail}.</p>
           <AuthField
             label="Mật khẩu mới"
             name="password"
