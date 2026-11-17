@@ -47,8 +47,8 @@ export const PAYMENT_STATUS_LABELS: Record<string, string> = {
 
 export const REFUND_STATUS_LABELS: Record<string, string> = {
   REQUESTED: "Chờ duyệt",
-  APPROVED: "Đã duyệt, chờ nhận hàng hoàn",
-  RECEIVED: "Đã nhận hàng, chờ hoàn tiền",
+  APPROVED: "Chờ nhận hàng hoàn",
+  RECEIVED: "Chờ hoàn tiền",
   REFUNDED: "Đã hoàn tiền",
   REJECTED: "Bị từ chối",
 };

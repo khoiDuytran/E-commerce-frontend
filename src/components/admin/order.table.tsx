@@ -76,6 +76,9 @@ const OrderTable = ({ orders, meta, error }: IProps) => {
   const [selectedPaymentStatus, setSelectedPaymentStatus] = useState<
     string | undefined
   >(searchParams.get("paymentStatus") || undefined);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<
+    string | undefined
+  >(searchParams.get("paymentMethod") || undefined);
 
   const updateQuery = (updates: Record<string, string | null>) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -91,6 +94,7 @@ const OrderTable = ({ orders, meta, error }: IProps) => {
       orderCode: searchCode.trim() || null,
       status: selectedStatus || null,
       paymentStatus: selectedPaymentStatus || null,
+      paymentMethod: selectedPaymentMethod || null,
       current: "1",
     });
   };
@@ -99,6 +103,7 @@ const OrderTable = ({ orders, meta, error }: IProps) => {
     setSearchCode("");
     setSelectedStatus(undefined);
     setSelectedPaymentStatus(undefined);
+    setSelectedPaymentMethod(undefined);
     router.replace(pathname);
   };
 
@@ -184,6 +189,17 @@ const OrderTable = ({ orders, meta, error }: IProps) => {
     }
   };
 
+  const renderPaymentMethodTag = (method?: string) => {
+    switch (method) {
+      case "VNPAY":
+        return <Tag color="blue">VNPay</Tag>;
+      case "COD":
+        return <Tag color="orange">COD</Tag>;
+      default:
+        return <span className="text-gray-400">---</span>;
+    }
+  };
+
   const columns: TableProps<IOrder>["columns"] = [
     {
       title: "STT",
@@ -251,6 +267,13 @@ const OrderTable = ({ orders, meta, error }: IProps) => {
           {formatCurrency(total)}
         </span>
       ),
+    },
+    {
+      title: "Phương thức",
+      dataIndex: "paymentMethod",
+      key: "paymentMethod",
+      align: "center",
+      render: (method?: string) => renderPaymentMethodTag(method),
     },
     {
       title: "Thanh toán",
@@ -372,7 +395,7 @@ const OrderTable = ({ orders, meta, error }: IProps) => {
         <Row gutter={[16, 16]} align="middle" justify="space-between">
           <Col xs={24} md={18}>
             <Row gutter={[8, 8]} align="middle">
-              <Col xs={24} sm={8}>
+              <Col xs={24} sm={6}>
                 <Input
                   placeholder="Tìm theo mã đơn (ORD-...)"
                   prefix={<SearchOutlined className="text-gray-400" />}
@@ -382,7 +405,7 @@ const OrderTable = ({ orders, meta, error }: IProps) => {
                   allowClear
                 />
               </Col>
-              <Col xs={12} sm={6}>
+              <Col xs={12} sm={5}>
                 <Select
                   placeholder="Trạng thái đơn"
                   allowClear
@@ -398,7 +421,7 @@ const OrderTable = ({ orders, meta, error }: IProps) => {
                   ]}
                 />
               </Col>
-              <Col xs={12} sm={6}>
+              <Col xs={12} sm={5}>
                 <Select
                   placeholder="Thanh toán"
                   allowClear
@@ -409,6 +432,19 @@ const OrderTable = ({ orders, meta, error }: IProps) => {
                     { value: "PAID", label: "Đã thanh toán" },
                     { value: "UNPAID", label: "Chưa thanh toán" },
                     { value: "REFUNDED", label: "Đã hoàn tiền" },
+                  ]}
+                />
+              </Col>
+              <Col xs={12} sm={4}>
+                <Select
+                  placeholder="Phương thức"
+                  allowClear
+                  className="w-full"
+                  value={selectedPaymentMethod}
+                  onChange={(val) => setSelectedPaymentMethod(val)}
+                  options={[
+                    { value: "COD", label: "COD" },
+                    { value: "VNPAY", label: "VNPay" },
                   ]}
                 />
               </Col>

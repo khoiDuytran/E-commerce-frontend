@@ -21,6 +21,7 @@ interface IProps {
     orderCode?: string;
     status?: string;
     paymentStatus?: string;
+    paymentMethod?: string;
   }>;
 }
 
@@ -42,6 +43,11 @@ const OrdersContent = async ({ searchParams }: IProps) => {
   const status = typeof params.status === "string" ? params.status.trim() : "";
   const paymentStatus =
     typeof params.paymentStatus === "string" ? params.paymentStatus.trim() : "";
+  // Chỉ nhận giá trị hợp lệ để chuỗi lạ từ URL không đi vào query của backend
+  const paymentMethod =
+    params.paymentMethod === "COD" || params.paymentMethod === "VNPAY"
+      ? params.paymentMethod
+      : "";
 
   const headers = await getAuthHeader();
 
@@ -58,6 +64,7 @@ const OrdersContent = async ({ searchParams }: IProps) => {
         ...(orderCode ? { orderCode: `/${orderCode}/i` } : {}),
         ...(status ? { status } : {}),
         ...(paymentStatus ? { paymentStatus } : {}),
+        ...(paymentMethod ? { paymentMethod } : {}),
         sort: "-createdAt",
       },
       headers,

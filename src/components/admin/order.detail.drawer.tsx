@@ -69,6 +69,8 @@ export interface IOrder {
   total: number;
   status: string;
   paymentStatus: string;
+  // Đơn cũ chưa chạy migration thì chưa có field này
+  paymentMethod?: "COD" | "VNPAY";
   note?: string;
   createdAt: string;
   updatedAt?: string;
@@ -408,6 +410,15 @@ const OrderDetailDrawer = ({
               className="h-full border-emerald-100"
             >
               <Descriptions column={1} size="small">
+                <Descriptions.Item label="Phương thức">
+                  {order.paymentMethod === "VNPAY" ? (
+                    <Tag color="blue">VNPay</Tag>
+                  ) : order.paymentMethod === "COD" ? (
+                    <Tag color="orange">COD</Tag>
+                  ) : (
+                    <span className="text-gray-400">---</span>
+                  )}
+                </Descriptions.Item>
                 <Descriptions.Item label="Thanh toán">
                   {order.paymentStatus === "PAID" ? (
                     <Tag color="success">Đã thanh toán</Tag>

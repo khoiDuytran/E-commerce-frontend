@@ -51,8 +51,8 @@ interface PendingAction {
 
 const STATUS_TAGS: Record<RefundStatus, { color: string; label: string }> = {
   REQUESTED: { color: "gold", label: "Chờ duyệt" },
-  APPROVED: { color: "blue", label: "Đã duyệt, chờ nhận hàng" },
-  RECEIVED: { color: "purple", label: "Đã nhận hàng, chờ hoàn tiền" },
+  APPROVED: { color: "blue", label: "Chờ nhận hàng" },
+  RECEIVED: { color: "purple", label: "Chờ hoàn tiền" },
   REFUNDED: { color: "green", label: "Đã hoàn tiền" },
   REJECTED: { color: "default", label: "Đã từ chối" },
 };
@@ -97,18 +97,25 @@ const formatVnd = (value: number) =>
 const formatDate = (value?: string) =>
   value
     ? new Date(value).toLocaleString("vi-VN", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      })
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
     : "---";
 
-const errorText = (res: IBackendRes<unknown> | undefined, fallback: string) =>
-  (Array.isArray(res?.error) ? res.error.join(", ") : res?.error) ||
-  res?.message ||
-  fallback;
+// NestJS đặt thông báo cụ thể ở `message` (mảng khi lỗi validation),
+// còn `error` chỉ là tên mã HTTP như "Bad Gateway"
+const errorText = (res: IBackendRes<unknown> | undefined, fallback: string) => {
+  const message: unknown = res?.message;
+  if (Array.isArray(message)) return message.join(", ");
+  return (
+    (typeof message === "string" && message) ||
+    (Array.isArray(res?.error) ? res.error.join(", ") : res?.error) ||
+    fallback
+  );
+};
 
 // Giải thích hậu quả của từng bước để admin không thao tác nhầm
 const ActionNotice = ({ action }: { action: PendingAction }) => {
