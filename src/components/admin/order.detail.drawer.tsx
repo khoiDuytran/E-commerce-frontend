@@ -2,6 +2,7 @@
 
 import {
   handleCancelOrderAction,
+  handleDeliveryFailedOrderAction,
   handleUpdateOrderAction,
 } from "@/utils/actions";
 import {
@@ -183,6 +184,34 @@ const OrderDetailDrawer = ({
     }
   };
 
+  const handleDeliveryFailed = async () => {
+    setIsUpdating(true);
+    try {
+      const res = await handleDeliveryFailedOrderAction(order._id);
+      if (res?.data) {
+        message.success(
+          order.paymentStatus === "PAID"
+            ? "Đã đánh dấu giao thất bại và hoàn kho. Đơn đã thanh toán, cần hoàn tiền thủ công cho khách."
+            : "Đã đánh dấu giao thất bại và hoàn lại tồn kho.",
+        );
+        onRefresh?.();
+        onClose();
+      } else {
+        const errorMsg = Array.isArray(res?.error)
+          ? res.error.join(", ")
+          : res?.message || "Cập nhật thất bại";
+        notification.error({
+          message: "Lỗi cập nhật",
+          description: errorMsg,
+        });
+      }
+    } catch {
+      message.error("Lỗi khi kết nối máy chủ");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   const itemColumns: TableProps<IOrderItem>["columns"] = [
     {
       title: "Sản phẩm",
@@ -294,6 +323,25 @@ const OrderDetailDrawer = ({
             >
               Đã giao thành công
             </Button>
+          )}
+
+          {order.status === "SHIPPING" && (
+            <Popconfirm
+              title="Xác nhận giao thất bại"
+              description={
+                order.paymentStatus === "PAID"
+                  ? "Khách không nhận hàng. Đơn sẽ kết thúc và hàng được trả lại kho. Đơn đã thanh toán nên bạn cần hoàn tiền thủ công cho khách."
+                  : "Khách không nhận hàng. Đơn sẽ kết thúc và hàng được trả lại kho. Bạn có chắc chắn không?"
+              }
+              okText="Giao thất bại"
+              cancelText="Không"
+              okButtonProps={{ danger: true, loading: isUpdating }}
+              onConfirm={handleDeliveryFailed}
+            >
+              <Button danger icon={<CloseCircleOutlined />} loading={isUpdating}>
+                Giao thất bại
+              </Button>
+            </Popconfirm>
           )}
 
           {(order.status === "PENDING" || order.status === "CONFIRMED") && (
@@ -443,6 +491,9 @@ const OrderDetailDrawer = ({
                   )}
                   {order.status === "CANCELLED" && (
                     <Tag color="default">Đã hủy</Tag>
+                  )}
+                  {order.status === "DELIVERY_FAILED" && (
+                    <Tag color="volcano">Giao thất bại</Tag>
                   )}
                   {order.status.startsWith("RETURN") && (
                     <Tag color="magenta">{order.status}</Tag>

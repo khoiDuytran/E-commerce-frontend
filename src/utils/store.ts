@@ -32,6 +32,7 @@ export const ORDER_STATUS_LABELS: Record<string, string> = {
   SHIPPING: "Đang giao",
   DELIVERED: "Đã giao",
   CANCELLED: "Đã hủy",
+  DELIVERY_FAILED: "Giao không thành công",
   RETURN_REQUESTED: "Đã yêu cầu hoàn hàng",
   RETURN_APPROVED: "Đã duyệt hoàn hàng",
   RETURN_RECEIVED: "Cửa hàng đã nhận hàng hoàn",
@@ -70,7 +71,11 @@ export const ORDER_TABS = [
       "REFUNDED",
     ],
   },
-  { key: "cancelled", label: "Đã hủy", statuses: ["CANCELLED"] },
+  {
+    key: "cancelled",
+    label: "Đã hủy",
+    statuses: ["CANCELLED", "DELIVERY_FAILED"],
+  },
 ];
 
 // Sản phẩm thường gắn ở danh mục con nên danh mục cha phải gồm cả cây con

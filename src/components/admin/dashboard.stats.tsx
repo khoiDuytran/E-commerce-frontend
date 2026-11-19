@@ -120,6 +120,7 @@ const STATUS_LABEL: Record<string, { label: string; color: string }> = {
     SHIPPING: { label: "Đang giao", color: "cyan" },
     DELIVERED: { label: "Đã giao", color: "green" },
     CANCELLED: { label: "Đã huỷ", color: "red" },
+    DELIVERY_FAILED: { label: "Giao thất bại", color: "volcano" },
     REFUNDED: { label: "Hoàn tiền", color: "purple" },
     RETURN_REQUESTED: { label: "Yêu cầu trả hàng", color: "orange" },
 };

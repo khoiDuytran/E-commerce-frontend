@@ -62,7 +62,10 @@ const OrdersPage = async ({ searchParams }: IProps) => {
     await Promise.all(
       (orders?.results ?? [])
         .filter(
-          (order) => order.paymentStatus === "UNPAID" && order.status !== "CANCELLED",
+          (order) =>
+            order.paymentStatus === "UNPAID" &&
+            order.status !== "CANCELLED" &&
+            order.status !== "DELIVERY_FAILED",
         )
         .map(
           async (order) =>

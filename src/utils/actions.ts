@@ -469,6 +469,18 @@ export const handleCancelOrderAction = async (id: string) => {
   return res;
 };
 
+// Giao thất bại: backend hoàn kho, coupon và báo admin nếu cần hoàn tiền thủ công
+export const handleDeliveryFailedOrderAction = async (id: string) => {
+  const authHeader = await getAuthHeader();
+  const res = await sendRequest<IBackendRes<{ order: unknown }>>({
+    url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/orders/delivery-failed/${encodeURIComponent(id)}`,
+    method: "PATCH",
+    headers: authHeader,
+  });
+  updateTag("list-orders");
+  return res;
+};
+
 export const handleGetOrderDetailAction = async (id: string) => {
   const authHeader = await getAuthHeader();
   const res = await sendRequest<IBackendRes<unknown>>({

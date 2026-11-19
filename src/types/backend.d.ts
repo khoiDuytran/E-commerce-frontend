@@ -79,6 +79,7 @@ declare global {
     processing: number;
     delivered: number;
     cancelled: number;
+    deliveryFailed: number;
     returns: number;
     revenue: number;
   }

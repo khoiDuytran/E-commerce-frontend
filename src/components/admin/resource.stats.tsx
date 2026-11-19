@@ -175,10 +175,10 @@ export const OrderStats = async () => {
         },
         {
           title: "Hủy / trả hàng",
-          value: stats.cancelled + stats.returns,
+          value: stats.cancelled + stats.deliveryFailed + stats.returns,
           icon: "Rollback",
           color: COLOR.danger,
-          note: `${stats.cancelled} hủy · ${stats.returns} trả hàng`,
+          note: `${stats.cancelled} hủy · ${stats.deliveryFailed} giao thất bại · ${stats.returns} trả hàng`,
         },
         {
           title: "Doanh thu",

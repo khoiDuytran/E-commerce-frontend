@@ -121,6 +121,7 @@ export const canRetryPayment = (order: IStoreOrder, method?: string | null) =>
   method === "VNPAY" &&
   order.paymentStatus === "UNPAID" &&
   order.status !== "CANCELLED" &&
+  order.status !== "DELIVERY_FAILED" &&
   order.status !== "REFUNDED";
 
 // Sản phẩm đã bị xoá được populate thành null; chỉ giữ field cần hiển thị

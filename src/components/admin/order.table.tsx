@@ -161,6 +161,8 @@ const OrderTable = ({ orders, meta, error }: IProps) => {
         return <Tag color="green">Giao thành công</Tag>;
       case "CANCELLED":
         return <Tag color="default">Đã hủy</Tag>;
+      case "DELIVERY_FAILED":
+        return <Tag color="volcano">Giao thất bại</Tag>;
       case "RETURN_REQUESTED":
         return <Tag color="magenta">Yêu cầu hoàn</Tag>;
       case "RETURN_APPROVED":
@@ -418,6 +420,7 @@ const OrderTable = ({ orders, meta, error }: IProps) => {
                     { value: "SHIPPING", label: "Đang giao hàng" },
                     { value: "DELIVERED", label: "Giao thành công" },
                     { value: "CANCELLED", label: "Đã hủy" },
+                    { value: "DELIVERY_FAILED", label: "Giao thất bại" },
                   ]}
                 />
               </Col>
